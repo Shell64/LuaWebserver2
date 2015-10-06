@@ -1,1 +1,0 @@
-luajit.exe main.lua

@@ -87,13 +87,14 @@ local function GET(ClientConnection)
 			local Parameter = Queue.GET:Substring(I, #Queue.GET)
 			
 			Queue.GET = Queue.GET:Substring(1, I -1)
+			Queue.Parameter = Parameter
 			
 			print("Conexao " .. ClientConnection.ID ..": " .. "REMOVEU O PARAMETRO: " .. Parameter)
 			break
 		end
 	end
 	
-	--tente procurar o arquivo, se nao encontrar no host em que ele esta acessando, procure no default.
+	--tente procurar o arquivo, se nao encontrar no host em que ele esta acessando, procure na pasta default.
 	if FileSystem2.IsFile(Webserver.WWW .. Queue.Host .. "/" .. Queue.GET) then
 		Found = Webserver.WWW .. Queue.Host .. "/" .. Queue.GET
 	end
@@ -136,6 +137,7 @@ local function GET(ClientConnection)
 	
 	print("Conexao " .. ClientConnection.ID ..": " .. Extension)
 	
+	--Se não foi encontrado o arquivo
 	if not Found then
 		print("Conexao " .. ClientConnection.ID ..": GET: 404 Not found " .. Queue.GET)
 		Queue.Data = 
@@ -152,43 +154,87 @@ local function GET(ClientConnection)
 		Queue.DataSize = #Queue.Data
 		
 		Table.Insert(ClientConnection.Queue, Queue)
+		
 	else
+		--Se foi encontrado
+		
+		local FileExtension = Utilities.GetExtension(ToString(Found)):Lower()
+			
 		print("Conexao " .. ClientConnection.ID ..": " .. "ENCONTROU ARQUIVO " .. Found)
-		local Attributes = FileSystem2.Attributes(Found)
 		
-		Webserver.ETags[Found] = SHA1(Found .. ToString(Attributes.modification))
+		--Se for .lua, compile
+		if FileExtension == "lua" then
+			local Attributes = FileSystem2.Attributes(Found)
+			
+			Webserver.ETags[Found] = SHA1(Found .. ToString(Attributes.modification))
+			
+			print("Conexao " .. ClientConnection.ID ..": " .. "GET: 200 OK " .. Queue.GET)
+			
+			local Data = FileSystem2.Read(Found)
+			local Application = Applications.RunString(Data)
+			local PageData = ToString(Application.GET(Connection, Queue))
+			
+			print("PAGE DATA:")
+			print(PageData)
+			
+			Queue.Data = 
+			"HTTP/1.1 200 OK" .. HTTP.NewLine ..
+			"Date: " .. Utilities.Date() .. HTTP.NewLine ..
+			"Server: Lua Server " .. HTTP.NewLine ..
+			"Last-Modified: " .. Utilities.Date() .. HTTP.NewLine ..
+			"Accept-Ranges: none" .. HTTP.NewLine ..
+			"Content-Length: " .. #PageData .. HTTP.NewLine ..
+			"Content-Type: " .. Extension .. HTTP.End
+			
+			Queue.DataSize = #Queue.Data
+			Table.Insert(ClientConnection.Queue, Queue)
+			
+			
+			local Queue = QueueObject.New()
+			
+			Queue.Data = PageData
+			
+			print(Found)
+			print("Conexao " .. ClientConnection.ID ..": " .. Found .. " tem " .. #Queue.Data .. " bytes")
+			Queue.DataSize = #Queue.Data
 		
-		print("Conexao " .. ClientConnection.ID ..": " .. "GET: 200 OK " .. Queue.GET)
+			Table.Insert(ClientConnection.Queue, Queue)
+			
+		--Se for um arquivo qualquer, envie
+		else
+			print("Conexao " .. ClientConnection.ID ..": " .. "ENCONTROU ARQUIVO " .. Found)
+			local Attributes = FileSystem2.Attributes(Found)
+			
+			Webserver.ETags[Found] = SHA1(Found .. ToString(Attributes.modification))
+			
+			print("Conexao " .. ClientConnection.ID ..": " .. "GET: 200 OK " .. Queue.GET)
+			
+			Queue.Data = 
+			"HTTP/1.1 200 OK" .. HTTP.NewLine .. 
+			"Date: " .. Utilities.Date() .. HTTP.NewLine ..
+			"Server: Lua Server " .. HTTP.NewLine ..
+			"Last-Modified: " .. Utilities.GetDate(Attributes.modification) .. HTTP.NewLine ..
+			"Accept-Ranges: none" .. HTTP.NewLine .. 
+			"Content-Length: " .. Attributes.size .. HTTP.NewLine .. 
+			"Content-Type: " .. Extension .. HTTP.End
+			
+			Queue.DataSize = #Queue.Data
+			
+			Table.Insert(ClientConnection.Queue, Queue)
+			
+			local Queue = QueueObject.New()
+			
+		--	Queue.Data = FileSystem2.NewFile(Found)
+		--	Queue.DataSize = Attributes.size
 		
-		Queue.Data = 
-		"HTTP/1.1 200 OK" .. HTTP.NewLine .. 
-		"Date: " .. Utilities.Date() .. HTTP.NewLine ..
-		"Server: Lua Server " .. HTTP.NewLine ..
-		"Last-Modified: " .. Utilities.GetDate(Attributes.modification) .. HTTP.NewLine ..
-		"Accept-Ranges: none" .. HTTP.NewLine .. 
-		"Content-Length: " .. Attributes.size .. HTTP.NewLine .. 
-		"Content-Type: " .. Extension .. HTTP.End
+			Queue.Data = FileSystem2.Read(Found)
+			
+			print(Found)
+			print("Conexao " .. ClientConnection.ID ..": " .. Found .. " tem " .. #Queue.Data .. " bytes")
+			Queue.DataSize = #Queue.Data
 		
-		Queue.DataSize = #Queue.Data
-		
-		Table.Insert(ClientConnection.Queue, Queue)
-		
-		local Queue = QueueObject.New()
-		
-	--	Queue.Data = FileSystem2.NewFile(Found)
-	--	Queue.DataSize = Attributes.size
-	
-		Queue.Data = FileSystem2.Read(Found)
-		
-		print(Found)
-		if Utilities.GetExtension(ToString(Found)):Lower() == "lua" then
-			Queue.Data = loadstring(Queue.Data)()
+			Table.Insert(ClientConnection.Queue, Queue)
 		end
-		
-		print("Conexao " .. ClientConnection.ID ..": " .. Found .. " tem " .. #Queue.Data .. " bytes")
-		Queue.DataSize = #Queue.Data
-	
-		Table.Insert(ClientConnection.Queue, Queue)
 	end
 	
 end

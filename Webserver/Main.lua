@@ -3,6 +3,12 @@
 local Require = require
 
 -------------------------------------
+--Adicionar caminhos para as bibliotecas
+-------------------------------------
+package.cpath = package.cpath .. ";../../Webserver/?.dll;../../Webserver/?.so"
+package.path = package.path .. ";../../Webserver/?.lua"
+
+-------------------------------------
 --Requerir bibliotecas necessarias
 -------------------------------------
 Require("Libraries/Wrap/Wrap")
@@ -26,7 +32,7 @@ Webserver.Timeout = 5 --segundos
 Webserver.Index = {"index.html", "index.htm", "index.lua"}
 Webserver.Name = "LuaWebserver"
 Webserver.Version = {Major = 2, Minor = 0, Revision = 0}
-Webserver.WWW = "www/"
+Webserver.WWW = "../../www/"
 
 Webserver.CacheFileMaximumSize = 1024 * 1024 * 8 --em bytes
 Webserver.CacheMaximumSize = 1024 * 1024 * 512 --em bytes
@@ -46,6 +52,7 @@ MIME = 			Require("Source/MIME")
 HTTP = 			Require("Source/HTTP")
 Connection = 	Require("Source/Connection")
 Utilities = 	Require("Source/Utilities")
+Applications = 	Require("Source/Applications")
 
 GET = 	Require("Source/Methods/GET")
 
