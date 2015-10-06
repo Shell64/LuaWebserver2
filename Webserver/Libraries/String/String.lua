@@ -9,5 +9,19 @@ function String.Trim(Str)
 end
 
 function String.Mask(Str)
-	local Str = Str:GSubstring("[%-%.%+%[%]%(%)%$%^%%%?%*]", "%%%1"):GSubstring("%z", "%%z")
+	return Str:GSubstring("[%-%.%+%[%]%(%)%$%^%%%?%*]", "%%%1"):GSubstring("%z", "%%z")
 end
+
+----------------------------------------------------------------------------------
+-- Substitui em uma string, uma string por uma outra.
+-- @param #string
+-- @param #string
+-- @param #string
+-- @return #string
+function String.Replace(Str, ReplaceWhat, ReplaceWhatFor)
+	ReplaceWhat = ReplaceWhat:GSubstring("[%-%.%+%[%]%(%)%$%^%%%?%*]", "%%%1"):GSubstring("%z", "%%z")
+	ReplaceWhatFor = ReplaceWhatFor:GSubstring("[%-%.%+%[%]%(%)%$%^%%%?%*]", "%%%1"):GSubstring("%z", "%%z")
+	return Str:GSubstring(ReplaceWhat, ReplaceWhatFor)
+end
+
+print(String.Replace("{{Nome}}", "{{Nome}}", "What"))

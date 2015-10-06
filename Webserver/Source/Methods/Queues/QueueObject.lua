@@ -1,4 +1,4 @@
-local QueueObject = Class.New("QueueObject")
+﻿local QueueObject = Class.New("QueueObject")
 
 QueueObject.GetSet("GET", "string")
 

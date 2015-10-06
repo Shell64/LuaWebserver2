@@ -16,13 +16,42 @@ local LoadString = LoadString
 function Applications.RunString(Str)
 	local Application = Application.New()
 	
-	local CompiledCode = LoadString("return function(Application)\n" .. Str .. "\n return Application end")
+	local CompiledCode, Err = LoadString("return function(Application) " .. Str .. " return Application end")
 	
-	local RunFunction = CompiledCode()
-	
-	RunFunction(Application)
+	if CompiledCode then
+		local RunFunction = CompiledCode()
+		
+		RunFunction(Application)
+	else
+		
+		print("Could not load code: " .. ToString(Err))
+	end
 	
 	return Application
+end
+
+function Applications.GenerateEnvironment(HostPath)
+	--Ambiente da API, variaveis que poderão ser acessíveis pela pagina
+	
+	local Environment = Table.Clone(InitialEnvironment)
+	
+	Environment.FileSystem2 = {}
+	
+	function Environment.FileSystem2.Read(Path)
+		return FileSystem2.Read(HostPath .. Path)
+	end
+	
+	Environment.Template = {}
+	Environment.Template.New = Template.New
+	
+	Environment.Webserver = {}
+	Environment.Webserver.Name = Webserver.Name
+	Environment.Webserver.Version = {}
+	Environment.Webserver.Version.Major = Webserver.Version.Major
+	Environment.Webserver.Version.Minor = Webserver.Version.Minor
+	Environment.Webserver.Version.Revision = Webserver.Version.Revision
+	
+	return Environment
 end
 
 return Applications

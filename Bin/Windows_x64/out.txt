@@ -1,0 +1,8 @@
+function a()
+	return function(Application)
+		
+		﻿function asd()
+		end
+		
+	end
+end

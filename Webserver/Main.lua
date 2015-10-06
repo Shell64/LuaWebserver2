@@ -1,4 +1,4 @@
-#!/bin/luajit
+﻿#!/bin/luajit
 
 local Require = require
 
@@ -11,8 +11,9 @@ package.path = package.path .. ";../../Webserver/?.lua"
 -------------------------------------
 --Requerir bibliotecas necessarias
 -------------------------------------
-Require("Libraries/Wrap/Wrap")
-
+				Require("Libraries/Wrap/Wrap")
+				Require("Libraries/Table/Table")
+InitialEnvironment = Table.Clone(_G)
 				Require("Libraries/String/String")
 SHA1 = 			Require("Libraries/SHA1/SHA1")
 Class = 		Require("Libraries/Class/Class")
@@ -25,17 +26,10 @@ Require("socket")
 -------------------------------------
 
 Webserver = {}
-Webserver.Port = 9091
-Webserver.KeepAlive = false
-Webserver.SplitPacketSize = 1024 * 4 --em bytes
-Webserver.Timeout = 5 --segundos
-Webserver.Index = {"index.html", "index.htm", "index.lua"}
 Webserver.Name = "LuaWebserver"
 Webserver.Version = {Major = 2, Minor = 0, Revision = 0}
-Webserver.WWW = "../../www/"
 
-Webserver.CacheFileMaximumSize = 1024 * 1024 * 8 --em bytes
-Webserver.CacheMaximumSize = 1024 * 1024 * 512 --em bytes
+Require("Config")
 
 -------------------------------------
 --Webserver Cache
@@ -48,10 +42,12 @@ Webserver.ETags = {} --hash [path + data modificacao]
 -------------------------------------
 --Requerir classes necessarias
 -------------------------------------
+Language = 		Require("Source/Language")
 MIME = 			Require("Source/MIME")
 HTTP = 			Require("Source/HTTP")
 Connection = 	Require("Source/Connection")
 Utilities = 	Require("Source/Utilities")
+Template = 		Require("Source/Template")
 Applications = 	Require("Source/Applications")
 
 GET = 	Require("Source/Methods/GET")
@@ -75,7 +71,7 @@ while ToString(ServerTCP):Substring(1, 3) ~= "tcp" or not ProtectedCall(function
 	ServerTCP = Socket.tcp()
 	ServerTCP:bind('*', Webserver.Port)
 	ServerTCP:settimeout(0)
-	ServerTCP:listen(500)
+	ServerTCP:listen(Webserver.MaximumWaitingConnections)
 end
 
 Print("Porta " .. Webserver.Port .. " ocupada com sucesso.")
@@ -96,7 +92,8 @@ function Webserver.Update(...)
 		local ClientConnection = Connection.New(ClientTCP)
 		ClientConnection.Reading = true
 		
-		print("Recebeu conexao " .. ClientConnection:GetID())
+		local IP, Port = ClientTCP:getpeername()
+		print(String.Format(Language[Webserver.Language][1], ClientConnection:GetID(), ToString(IP), ToString(Port)))
 	end
 	
 	local TimeNow = Socket.gettime()
@@ -114,27 +111,29 @@ function Webserver.Update(...)
 				if Data == "" then
 					
 					for Key, Value in IteratePairs(ClientConnection.IncomingData) do
-						print(Value)
+						--print(Value)
 					end
 					
 					if ClientConnection.IncomingData[1]:Substring(1, 3):Trim() == "GET" then
-						print("Foi recebido um GET da conexao " .. ClientConnection.ID .. ", inserindo na fila.")
+						--print("Foi recebido um GET da conexao " .. ClientConnection.ID .. ", inserindo na fila.")
 						GET(ClientConnection)
 					end
 				else
 				--Se não adicione mais uma msg recebida na tabela de mensagem recebida.
 					ClientConnection.IncomingData[#ClientConnection.IncomingData + 1] = Data
-					print("Conexao " .. ClientConnection:GetID() .. " recebido: " .. Data)
+					--print("Conexao " .. ClientConnection:GetID() .. " recebido: " .. Data)
 				end
 			end
 			
 			if Closed == "closed" then
-				print("Conexao " .. ClientConnection:GetID() .. " foi terminada. Razao: " .. Closed)
+				local IP, Port = ClientConnection.ClientTCP:getpeername()
+				print(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), Closed))
 				ClientConnection:Destroy()
 				
-			--elseif TimeNow - ClientConnection.CreateTime > Webserver.Timeout then
-			--	print("Conexao " .. ClientConnection:GetID() .. " demorou demais para responder, extrapolou o timeout do webserver. Destruindo.")
-			--	ClientConnection:Destroy()
+			elseif Webserver.Timeout > 0 and TimeNow - ClientConnection.CreateTime > Webserver.Timeout then
+				local IP, Port = ClientConnection.ClientTCP:getpeername()
+				print(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), "server timeout"))
+				ClientConnection:Destroy()
 			end
 		end
 		
@@ -172,14 +171,14 @@ function Webserver.Update(...)
 						ClientConnection.Queue[1].SentBytes = ClientConnection.Queue[1].SentBytes + SentBytes
 						ClientConnection.Queue[1].TotalSentBytes = ClientConnection.Queue[1].TotalSentBytes + SentBytes
 					elseif SentBytes == 0 then
-						print("Conexao " .. ClientConnection.ID ..": " .. "ESTA LENTA ERRO: " .. Err)
+						--print("Conexao " .. ClientConnection.ID ..": " .. "ESTA LENTA ERRO: " .. Err)
 					else
 						--print("Conexao " .. ClientConnection.ID ..": " .. "NAO FOI POSSIVEL ENVIAR BLOCO ERRO: " .. Err)
 					end
 				end
 				
 				if not Queue.BlockData or ClientConnection.Queue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
-					print("Conexao " .. ClientConnection.ID ..": " .. "FOI ENVIADO " .. ClientConnection.Queue[1].TotalSentBytes .. " ESPERAVA " .. ClientConnection.Queue[1].DataSize)
+					--print("Conexao " .. ClientConnection.ID ..": " .. "FOI ENVIADO " .. ClientConnection.Queue[1].TotalSentBytes .. " ESPERAVA " .. ClientConnection.Queue[1].DataSize)
 					--se for um arquivo, fechar o arquivo
 					if Type(ClientConnection.Queue[1].Data) ~= "string" then
 						ClientConnection.Queue[1].Data:close()
@@ -187,7 +186,7 @@ function Webserver.Update(...)
 					
 					Table.Remove(ClientConnection.Queue, 1)
 					
-					print("Conexao " .. ClientConnection.ID ..": " .. "Processado um item da fila da conexao " .. ClientConnection.ID)
+					--print("Conexao " .. ClientConnection.ID ..": " .. "Processado um item da fila da conexao " .. ClientConnection.ID)
 				end
 			end
 		end
