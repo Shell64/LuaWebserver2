@@ -14,5 +14,6 @@ function Table.Clone(Tab)
 	
 	return Clone
 end
-
+table.copy = Table.Clone
+table.Copy = Table.Clone
 table.clone = Table.Clone

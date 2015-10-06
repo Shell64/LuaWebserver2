@@ -34,12 +34,13 @@ local function GET(ClientConnection)
 	local Queue = QueueObject.New()
 	
 	local HeaderInformation = {}
+	
+	--Pre process Connection's received data. This code will parse all the attributes in the header received and autofill in Queue's attributes. HeaderInformation is a clone of these attributes that will be passed to the sandboxed LuaPages environment.
 	for Key, Value in IteratePairs(ClientConnection.IncomingData) do
 		Value = Value:Trim()
 		
 		local Attribute = String.Match(Value, "(.*)%:")
 		
-		--pegar todos os atributos do cabeçalho GET e preencher no HeaderInformation que será passado para a página API (Se houver) e no objeto Queue que irá para a fila.
 		if Value:sub(1, 3) == "GET" then
 			Queue.GET = String.Match(Value, "GET (.*) HTTP")
 			HeaderInformation.GET = Queue.GET
@@ -69,7 +70,9 @@ local function GET(ClientConnection)
 		end
 	end
 	
-	
+	--This code bellow will search for file in various directories.
+	--Variable Found is false by default, unless it finds the file and it turns into a string containing the filesystem path for the requested file.
+	--Variable HostPath is the path is the website folder where the requested file is. It will be passed to the LuaPages environment so it won't be able to get out of it.
 	local Found = false
 	local HostPath = ""
 	
@@ -77,12 +80,12 @@ local function GET(ClientConnection)
 		Queue.GET = Queue.GET:Substring(2, #Queue.GET)
 	end
 	
-	--Consertar caminhos, alguns browsers enviam os parametros como ?v=1 no GET. Temos de remover.
+	--Separe the path from URI parameters.
 	for I = 1, #Queue.GET do
 		if Queue.GET:Substring(I, I) == "?" then
 			local Parameter = Queue.GET:Substring(I, #Queue.GET)
 			
-			--Retira o escapamento da string (%)
+			--Convert URI escapes such %20, etc.
 			local StartEscape = 1
 			local LastEscape = 1
 			local FoundEscape = false
@@ -115,22 +118,22 @@ local function GET(ClientConnection)
 			if NewParameter ~= "" then
 				Parameter = NewParameter
 			end
-			--Fim do codigo para retirar escapamentos da string
+			--End of URI escapes code.
 			
 			Queue.GET = Queue.GET:Substring(1, I -1)
 			Queue.Parameter = Parameter
 			
-			--print("Conexao " .. ClientConnection.ID ..": " .. "REMOVEU O PARAMETRO: " .. Parameter)
 			break
 		end
 	end
 	
-	--tente procurar o arquivo, se nao encontrar no host em que ele esta acessando, procure na pasta default.
+	--Try to find the requested file in the requested host directory. If it finds, Found variable will turn into a string containing the path for it, otherwise it will remain as boolean (false)
 	if FileSystem2.IsFile(Webserver.WWW .. Queue.Host .. "/" .. Queue.GET) then
 		Found = Webserver.WWW .. Queue.Host .. "/" .. Queue.GET
 		HostPath = Webserver.WWW .. Queue.Host .. "/"
 	end
 	
+	--If not found yet, try to find the requested file in the requested "default" directory. If it finds, Found variable will turn into a string containing the path for it, otherwise it will remain as boolean (false)
 	if not Found then
 		if FileSystem2.IsFile(Webserver.WWW .. "default/" .. Queue.GET) then
 			Found = Webserver.WWW .. "default/" .. Queue.GET
@@ -138,15 +141,18 @@ local function GET(ClientConnection)
 		end
 	end
 
-	--se não foi encontrado, procure por arquivos index.
+	--Sometimes the requested file is not pointing to a file, this will try to search for index files.
 	if not Found then
 		for Key, Value in IteratePairs(Webserver.Index) do
+		
+			--Try to find the index file in requested host directory.
 			if FileSystem2.IsFile(Webserver.WWW .. Queue.Host .. "/" .. Queue.GET .. Value) then
 				Found = Webserver.WWW .. Queue.Host .. "/" .. Queue.GET .. Value
 				HostPath = Webserver.WWW .. Queue.Host .. "/"
 				break
 			end
 			
+			--Try to find the index file in default directory.
 			if FileSystem2.IsFile(Webserver.WWW .. "default/" .. Queue.GET .. Value) then
 				Found = Webserver.WWW .. "default/" .. Queue.GET .. Value
 				HostPath =  Webserver.WWW .. "default/"
@@ -155,7 +161,7 @@ local function GET(ClientConnection)
 		end
 	end
 	
-	--pega a extensao do arquivo para pegar o MIME da tabela MIME
+	--Get's the requested file extension and turns it into a MIME
 	local Extension = "*"
 	
 	if Found then
@@ -167,121 +173,80 @@ local function GET(ClientConnection)
 		end
 	end
 	
-	--print("Conexao " .. ClientConnection.ID ..": " .. Extension)
 	Extension = MIME[Extension] or MIME["*"]
 	
-	--print("Conexao " .. ClientConnection.ID ..": " .. Extension)
-	
-	--Se não foi encontrado o arquivo
+	--If file was not found, send 404 and not found page.
 	if not Found then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
-		print(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or Queue.GET)))
-		
-		--print("Conexao " .. ClientConnection.ID ..": GET: 404 Not found " .. Queue.GET)
-		Queue.Data = 
-		"HTTP/1.1 404 Not Found" .. HTTP.NewLine .. 
-		"Date: " .. Utilities.Date() .. HTTP.NewLine .. 
-		"Server: Lua Server " .. HTTP.NewLine ..
-		"Last-Modified: " .. Utilities.InitTime .. HTTP.NewLine ..
-		"Accept-Ranges: none" .. HTTP.NewLine .. 
-		"Content-Length: " .. #NotFound(Queue.GET) .. HTTP.NewLine .. 
-		"Content-Type: " .. Extension .. HTTP.NewLine ..
-		"Content-Type: text/html; charset=iso-8859-1" .. HTTP.End
+		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or Queue.GET)))
+	
+		Queue.Data = HTTP.GenerateHeader(404, {
+			["Last-Modified"] = Utilities.InitTime,
+			["Accept-Ranges"] = "none",
+			["Content-Length"] = #NotFound(Queue.GET),
+			["Content-Type"] = "text/html; charset=iso-8859-1",
+		})
 		
 		Queue.Data = Queue.Data .. NotFound(Queue.GET)
 		Queue.DataSize = #Queue.Data
 		
 		Table.Insert(ClientConnection.Queue, Queue)
-		
+
+	--else, if File was found: send the data for it, if it's a compilable page (.lua) it will compile and run the code and send the returned data.
 	else
-		--Se foi encontrado
-		
+	
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
-		print(String.Format(Language[Webserver.Language][4], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found)))
+		Log(String.Format(Language[Webserver.Language][4], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found)))
 		
 		local FileExtension = Utilities.GetExtension(ToString(Found)):Lower()
-			
-		--print("Conexao " .. ClientConnection.ID ..": " .. "ENCONTROU ARQUIVO " .. Found)
 		
-		--Se for .lua, compile
+		--Compile and run if it's .lua
 		if FileExtension == "lua" then
-			local Attributes = FileSystem2.Attributes(Found)
-			
-			Webserver.ETags[Found] = SHA1(Found .. ToString(Attributes.modification))
-			
-			--print("Conexao " .. ClientConnection.ID ..": " .. "GET: 200 OK " .. Queue.GET)
-			
-			local Data = FileSystem2.Read(Found)
-			local Application = Applications.RunString(Data)
-			
-			local Environment = Applications.GenerateEnvironment(HostPath)
-			
-			SetEnvironmentFunction(Application.GET, Environment)
-			local PageData = ToString(Application.GET({
+			local Information = {
 				Header = HeaderInformation,
 				Parameter = Queue.Parameter,
 				ConnectionID = ClientConnection.ID,
-			}) or nil)
+			}
 			
-			--print("PAGE DATA:")
-			--print(PageData)
+			local PageData, Code = Applications.RunLuaFile(Found, HostPath, Information)
 			
-			Queue.Data = 
-			"HTTP/1.1 200 OK" .. HTTP.NewLine ..
-			"Date: " .. Utilities.Date() .. HTTP.NewLine ..
-			"Server: Lua Server " .. HTTP.NewLine ..
-			"Last-Modified: " .. Utilities.Date() .. HTTP.NewLine ..
-			"Accept-Ranges: none" .. HTTP.NewLine ..
-			"Content-Length: " .. #PageData .. HTTP.NewLine ..
-			"Content-Type: " .. Extension .. HTTP.End
-			
+			--Generate the HTTP header and add it to queue for sending.
+			Queue.Data = HTTP.GenerateHeader(Code, {
+				["Last-Modified"] = Utilities.InitTime,
+				["Accept-Ranges"] = "none",
+				["Content-Length"] = #PageData,
+				["Content-Type"] = Extension,
+			})
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.Queue, Queue)
 			
-			
+			--Add the data to queue for sending.
 			local Queue = QueueObject.New()
-			
 			Queue.Data = PageData
-			
-			--print(Found)
-			--print("Conexao " .. ClientConnection.ID ..": " .. Found .. " tem " .. #Queue.Data .. " bytes")
 			Queue.DataSize = #Queue.Data
-		
 			Table.Insert(ClientConnection.Queue, Queue)
 			
-		--Se for um arquivo qualquer, envie
+		--Else, its a file like any other, just send the data that it contains.
 		else
-			--print("Conexao " .. ClientConnection.ID ..": " .. "ENCONTROU ARQUIVO " .. Found)
 			local Attributes = FileSystem2.Attributes(Found)
 			
-			Webserver.ETags[Found] = SHA1(Found .. ToString(Attributes.modification))
-			
-			--print("Conexao " .. ClientConnection.ID ..": " .. "GET: 200 OK " .. Queue.GET)
-			
+			--Generate the HTTP header and add it to queue for sending.
 			Queue.Data = 
-			"HTTP/1.1 200 OK" .. HTTP.NewLine .. 
-			"Date: " .. Utilities.Date() .. HTTP.NewLine ..
-			"Server: Lua Server " .. HTTP.NewLine ..
-			"Last-Modified: " .. Utilities.GetDate(Attributes.modification) .. HTTP.NewLine ..
-			"Accept-Ranges: none" .. HTTP.NewLine .. 
-			"Content-Length: " .. Attributes.size .. HTTP.NewLine .. 
-			"Content-Type: " .. Extension .. HTTP.End
-			
+			HTTP.GenerateHeader(200, {
+				["Last-Modified"] = Utilities.GetDate(Attributes.modification) ,
+				["Accept-Ranges"] = "none",
+				["Content-Length"] = Attributes.size,
+				["Content-Type"] = Extension,
+			})
 			Queue.DataSize = #Queue.Data
-			
 			Table.Insert(ClientConnection.Queue, Queue)
 			
+			--Add the data to queue for sending.
 			local Queue = QueueObject.New()
-			
 		--	Queue.Data = FileSystem2.NewFile(Found)
 		--	Queue.DataSize = Attributes.size
-		
 			Queue.Data = FileSystem2.Read(Found)
-			
-			--print(Found)
-			--print("Conexao " .. ClientConnection.ID ..": " .. Found .. " tem " .. #Queue.Data .. " bytes")
 			Queue.DataSize = #Queue.Data
-		
 			Table.Insert(ClientConnection.Queue, Queue)
 		end
 	end

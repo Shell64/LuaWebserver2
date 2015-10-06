@@ -6,7 +6,7 @@
 --Language
 -------------------------------------
 
-Webserver.Language = "pt"
+Webserver.Language = "en"
 
 -------------------------------------
 --Connection
@@ -33,7 +33,7 @@ Webserver.CacheFileMaximumSize = 1024 * 1024 * 8 --bytes
 Webserver.CacheMaximumSize = 1024 * 1024 * 512 --bytes
 
 -------------------------------------
---WWW
+--WWW, it's important to let the slash / in the end of path.
 -------------------------------------
 
 Webserver.WWW = "../../www/"

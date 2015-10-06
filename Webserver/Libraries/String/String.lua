@@ -23,5 +23,3 @@ function String.Replace(Str, ReplaceWhat, ReplaceWhatFor)
 	ReplaceWhatFor = ReplaceWhatFor:GSubstring("[%-%.%+%[%]%(%)%$%^%%%?%*]", "%%%1"):GSubstring("%z", "%%z")
 	return Str:GSubstring(ReplaceWhat, ReplaceWhatFor)
 end
-
-print(String.Replace("{{Nome}}", "{{Nome}}", "What"))

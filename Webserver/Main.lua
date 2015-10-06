@@ -35,7 +35,6 @@ Require("Config")
 --Webserver Cache
 -------------------------------------
 Webserver.Cache = {} --cache de arquivos
-Webserver.ETags = {} --hash [path + data modificacao]
 
 --Webserver.LineHeaderTimeout = 0.1 --segundos, o tempo máximo esperar pra receber uma linha do cabeçario quando inicia uma conexao.
 
@@ -48,6 +47,7 @@ HTTP = 			Require("Source/HTTP")
 Connection = 	Require("Source/Connection")
 Utilities = 	Require("Source/Utilities")
 Template = 		Require("Source/Template")
+HTML = 			Require("Source/HTML")
 Applications = 	Require("Source/Applications")
 
 GET = 	Require("Source/Methods/GET")
@@ -61,7 +61,7 @@ local Webserver = Webserver
 -------------------------------------
 --Inicialização do Socket
 -------------------------------------
-Print("Tentando ocupar porta " .. Webserver.Port)
+Log(String.Format(Language[Webserver.Language][5], ToString(Webserver.Port)))
 
 local Trying = true
 
@@ -74,7 +74,7 @@ while ToString(ServerTCP):Substring(1, 3) ~= "tcp" or not ProtectedCall(function
 	ServerTCP:listen(Webserver.MaximumWaitingConnections)
 end
 
-Print("Porta " .. Webserver.Port .. " ocupada com sucesso.")
+Log(String.Format(Language[Webserver.Language][6], Webserver.Port))
 
 -------------------------------------
 --Webserver
@@ -93,7 +93,7 @@ function Webserver.Update(...)
 		ClientConnection.Reading = true
 		
 		local IP, Port = ClientTCP:getpeername()
-		print(String.Format(Language[Webserver.Language][1], ClientConnection:GetID(), ToString(IP), ToString(Port)))
+		Log(String.Format(Language[Webserver.Language][1], ClientConnection:GetID(), ToString(IP), ToString(Port)))
 	end
 	
 	local TimeNow = Socket.gettime()
@@ -117,6 +117,7 @@ function Webserver.Update(...)
 					if ClientConnection.IncomingData[1]:Substring(1, 3):Trim() == "GET" then
 						--print("Foi recebido um GET da conexao " .. ClientConnection.ID .. ", inserindo na fila.")
 						GET(ClientConnection)
+						ClientConnection.IncomingData = {}
 					end
 				else
 				--Se não adicione mais uma msg recebida na tabela de mensagem recebida.
@@ -127,13 +128,13 @@ function Webserver.Update(...)
 			
 			if Closed == "closed" then
 				local IP, Port = ClientConnection.ClientTCP:getpeername()
-				print(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), Closed))
+				Log(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), Closed))
 				ClientConnection:Destroy()
 				
 			elseif Webserver.Timeout > 0 and TimeNow - ClientConnection.CreateTime > Webserver.Timeout then
-				local IP, Port = ClientConnection.ClientTCP:getpeername()
-				print(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), "server timeout"))
-				ClientConnection:Destroy()
+				--local IP, Port = ClientConnection.ClientTCP:getpeername()
+				--Log(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), "server timeout"))
+				--ClientConnection:Destroy()
 			end
 		end
 		

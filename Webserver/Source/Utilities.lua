@@ -7,11 +7,11 @@ local GMT = -1
 local TimeZone = Time({year = 1970, month = 1, day = 1, hour = 0}) + 3600 * -GMT
 
 function Utilities.Date()
-	return Date("Date: %a, %d %b %Y %X GMT", Time() + TimeZone)
+	return Date("%a, %d %b %Y %X GMT", Time() + TimeZone)
 end
 
 function Utilities.GetDate(Time)
-	return Date("Date: %a, %d %b %Y %X GMT", Time + TimeZone)
+	return Date("%a, %d %b %Y %X GMT", Time + TimeZone)
 end
 
 function Utilities.GetExtension(Str)
@@ -33,11 +33,18 @@ function Utilities.LoadString(Str, PassTable)
 		return RunFunction(PassTable)
 	else
 		
-		print("Could not load string: " .. ToString(Err))
+		Print("Could not load string: " .. ToString(Err))
 	end
 end
 
---Data de inicializacao do webserver, util para dizer a data de modificacao de páginas integradas dentro do webserver como o notfound.
+function Log(What, ...)
+	Print(Date("%x %X") .. " " .. ToString(What), ...)
+end
+
+--Stores the initial time date in this variable.
 Utilities.InitTime = Utilities.Date()
+
+--When initialize the library, load the first blacklist settings.
+--Applications.ReloadEnvironmentBlacklist()
 
 return Utilities
