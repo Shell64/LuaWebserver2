@@ -15,7 +15,6 @@ package.path = package.path .. ";../../Webserver/?.lua"
 				Require("Libraries/Table/Table")
 InitialEnvironment = Table.Clone(_G)
 				Require("Libraries/String/String")
-SHA1 = 			Require("Libraries/SHA1/SHA1")
 Class = 		Require("Libraries/Class/Class")
 FileSystem2 = 	Require("Libraries/FileSystem2/FileSystem2")
 
@@ -83,7 +82,10 @@ Webserver.ServerTCP = ServerTCP
 Webserver.Connections = {}
 
 function Webserver.Update(...)
-	--Receber conexoes
+	
+	-------------------------------------
+	--Receive incoming client connections and put in a Connection object.
+	-------------------------------------
 	local ClientTCP = ServerTCP:accept()
 	
 	if ClientTCP then
@@ -98,31 +100,34 @@ function Webserver.Update(...)
 	
 	local TimeNow = Socket.gettime()
 	
-	--Processar conexoes
+	-------------------------------------
+	--Process each Connection object in Webserver.Connections table.
+	-------------------------------------
 	for Key, ClientConnection in Pairs(Webserver.Connections) do
 		
-		--Receber dados
+		--Receive incoming data from connection
 		do
 			local Data, Closed = ClientConnection.ClientTCP:receive("*l")
 			
-			--Se recebeu algum dado
+			--If that received any data,
 			if Data then
-				--Se recebeu um cabeçalho do HTTP
+				--When a HTTP header ends, it sends a \n\n, so the incoming data in this case is "", means that the HTTP header
+				--was received. As we are reading every incoming line from socket, that will be "".
+				--So here, if we did receive the HTTP header,
 				if Data == "" then
 					
 					for Key, Value in IteratePairs(ClientConnection.IncomingData) do
-						--print(Value)
+						print(Value)
 					end
 					
+					--If that HEADER is a GET method.
 					if ClientConnection.IncomingData[1]:Substring(1, 3):Trim() == "GET" then
-						--print("Foi recebido um GET da conexao " .. ClientConnection.ID .. ", inserindo na fila.")
 						GET(ClientConnection)
 						ClientConnection.IncomingData = {}
 					end
 				else
-				--Se não adicione mais uma msg recebida na tabela de mensagem recebida.
+				--Else, it's just one more line and we need to add that to incoming data.
 					ClientConnection.IncomingData[#ClientConnection.IncomingData + 1] = Data
-					--print("Conexao " .. ClientConnection:GetID() .. " recebido: " .. Data)
 				end
 			end
 			
@@ -138,7 +143,7 @@ function Webserver.Update(...)
 			end
 		end
 		
-		--Enviar dados
+		--Send the information from "Send data queue" to client.
 		do
 			if ClientConnection.Queue[1] then
 				local Queue = ClientConnection.Queue[1]
@@ -147,18 +152,9 @@ function Webserver.Update(...)
 					if Type(Queue.Data) == "string" then
 						Queue.BlockData = Queue.Data:Substring(Queue.BlockIndex * Webserver.SplitPacketSize + 1, Math.Minimum(Queue.BlockIndex * Webserver.SplitPacketSize + Webserver.SplitPacketSize, Queue.DataSize))
 						Queue.BlockIndex = Queue.BlockIndex + 1
-						--print("Processando um item da fila da conexao " .. ClientConnection.ID .. "[" .. Queue.BlockIndex .. "/" .. Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) .. "]")
-						--print("Tamanho: " .. #Queue.BlockData)
 					else
 						Queue.BlockData = Queue.Data:read(Webserver.SplitPacketSize)
 						Queue.BlockIndex = Queue.BlockIndex + 1
-						--print("Processando um item da fila da conexao " .. ClientConnection.ID .. "[" .. Queue.BlockIndex .. "/" .. Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) .. "]")
-						
-						if Queue.BlockData then
-							--print("Tamanho: " .. #Queue.BlockData)
-						else
-							--print("Tamanho: nil")
-						end
 					end
 					
 					ClientConnection.Queue[1].SentBytes = 0
@@ -168,26 +164,23 @@ function Webserver.Update(...)
 					local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.Queue[1].SentBytes, #Queue.BlockData))
 					
 					if SentBytes then
-						--print("Conexao " .. ClientConnection.ID ..": " .. "Enviando " .. ClientConnection.Queue[1].DataSize .. " bytes. Enviado " .. ClientConnection.Queue[1].TotalSentBytes .. "/" .. ClientConnection.Queue[1].DataSize)
 						ClientConnection.Queue[1].SentBytes = ClientConnection.Queue[1].SentBytes + SentBytes
 						ClientConnection.Queue[1].TotalSentBytes = ClientConnection.Queue[1].TotalSentBytes + SentBytes
 					elseif SentBytes == 0 then
-						--print("Conexao " .. ClientConnection.ID ..": " .. "ESTA LENTA ERRO: " .. Err)
+						--if it is not sending any bytes, then the client is timing out
 					else
-						--print("Conexao " .. ClientConnection.ID ..": " .. "NAO FOI POSSIVEL ENVIAR BLOCO ERRO: " .. Err)
+						--nil, the client timed out or something else happened.
 					end
 				end
 				
 				if not Queue.BlockData or ClientConnection.Queue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
-					--print("Conexao " .. ClientConnection.ID ..": " .. "FOI ENVIADO " .. ClientConnection.Queue[1].TotalSentBytes .. " ESPERAVA " .. ClientConnection.Queue[1].DataSize)
-					--se for um arquivo, fechar o arquivo
+					--sometimes the data we are sending from queue is not a string, it might be streaming from a file, so we need to close it.
 					if Type(ClientConnection.Queue[1].Data) ~= "string" then
 						ClientConnection.Queue[1].Data:close()
 					end
 					
+					--We did finish that item from queue.
 					Table.Remove(ClientConnection.Queue, 1)
-					
-					--print("Conexao " .. ClientConnection.ID ..": " .. "Processado um item da fila da conexao " .. ClientConnection.ID)
 				end
 			end
 		end

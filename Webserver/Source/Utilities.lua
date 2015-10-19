@@ -3,15 +3,12 @@ local Utilities = {}
 local Date = OS.Date
 local Time = OS.Time
 
-local GMT = -1
-local TimeZone = Time({year = 1970, month = 1, day = 1, hour = 0}) + 3600 * -GMT
-
 function Utilities.Date()
-	return Date("%a, %d %b %Y %X GMT", Time() + TimeZone)
+	return Date("!%a, %d %b %Y %X GMT", Time())
 end
 
 function Utilities.GetDate(Time)
-	return Date("%a, %d %b %Y %X GMT", Time + TimeZone)
+	return Date("!%a, %d %b %Y %X GMT", Time)
 end
 
 function Utilities.GetExtension(Str)

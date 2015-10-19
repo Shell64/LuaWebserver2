@@ -1,20 +1,21 @@
 local Applications = {}
 
 -------------------------------------
---Requerir classes necessarias
+--Request required classes
 -------------------------------------
 local Application = Require("Source/Application")
 
 -------------------------------------
---Variáveis locais do arquivo
+--Local variables for this file (faster for lua)
 -------------------------------------
 local LoadString = LoadString
 
 Applications.Blacklist = {}
 
 -------------------------------------
---Métodos
+--Methods for Application class.
 -------------------------------------
+
 function Applications.RunLuaFile(Path, HostPath, Information)
 	local Data = FileSystem2.Read(Path)
 	
@@ -75,7 +76,7 @@ function Applications.ReloadEnvironmentBlacklist()
 end
 
 function Applications.GenerateEnvironment(HostPath)
-	--Ambiente da API, variaveis que poderão ser acessíveis pela pagina
+	--These are the variables/functions that will be accessible by the programmer on a .lua page
 	
 	local Environment = Table.Clone(InitialEnvironment)
 	
