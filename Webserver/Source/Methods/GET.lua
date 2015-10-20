@@ -175,8 +175,8 @@ local function GET(ClientConnection)
 	
 	Extension = MIME[Extension] or MIME["*"]
 	
-	--If file was not found, send 404 and not found page.
-	if not Found then
+	--If file was not found, send 404 and not found page or GET path is invalid
+	if not Found or Queue.GET:Find("..", nil, true) then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or Queue.GET)))
 	
