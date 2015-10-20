@@ -86,10 +86,12 @@ function Applications.GenerateEnvironment(HostPath, Host)
 	local Environment = Table.Clone(InitialEnvironment)
 	
 	if Application.Blacklist.Global then
-		Utilities.LoadString(Application.Blacklist.Global, Environment)
-	end
-	
-	if Application.Blacklist[Host] then
+		if Application.Blacklist[Host] then
+			Utilities.LoadString(Application.Blacklist.Global .. Application.Blacklist[Host], Environment)
+		else
+			Utilities.LoadString(Application.Blacklist.Global, Environment)
+		end
+	elseif Application.Blacklist[Host] then
 		Utilities.LoadString(Application.Blacklist[Host], Environment)
 	end
 	
