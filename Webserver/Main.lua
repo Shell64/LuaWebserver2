@@ -3,13 +3,13 @@
 local Require = require
 
 -------------------------------------
---Adicionar caminhos para as bibliotecas
+--Add library paths
 -------------------------------------
 package.cpath = package.cpath .. ";../../Webserver/?.dll;../../Webserver/?.so"
 package.path = package.path .. ";../../Webserver/?.lua"
 
 -------------------------------------
---Requerir bibliotecas necessarias
+--Request required libraries
 -------------------------------------
 				Require("Libraries/Wrap/Wrap")
 				Require("Libraries/Table/Table")
@@ -35,10 +35,10 @@ Require("Config")
 -------------------------------------
 Webserver.Cache = {} --cache de arquivos
 
---Webserver.LineHeaderTimeout = 0.1 --segundos, o tempo máximo esperar pra receber uma linha do cabeçario quando inicia uma conexao.
+--Webserver.LineHeaderTimeout = 0.1 --seconds, the max time to wait for a incoming header
 
 -------------------------------------
---Requerir classes necessarias
+--Request required classes
 -------------------------------------
 Language = 		Require("Source/Language")
 MIME = 			Require("Source/MIME")
@@ -52,13 +52,13 @@ Applications = 	Require("Source/Applications")
 GET = 	Require("Source/Methods/GET")
 
 -------------------------------------
---Variáveis locais do arquivo
+--Local variables for this file (faster for Lua)
 -------------------------------------
 local Socket = socket
 local Webserver = Webserver
 
 -------------------------------------
---Inicialização do Socket
+--Initialize Socket
 -------------------------------------
 Log(String.Format(Language[Webserver.Language][5], ToString(Webserver.Port)))
 
@@ -117,7 +117,7 @@ function Webserver.Update(...)
 				if Data == "" then
 					
 					for Key, Value in IteratePairs(ClientConnection.IncomingData) do
-						print(Value)
+						--print(Value)
 					end
 					
 					--If that HEADER is a GET method.
