@@ -17,7 +17,7 @@ Applications.Blacklist = {}
 -------------------------------------
 Application.Blacklist = {}
 
-function Applications.RunLuaFile(Path, HostPath, Information)
+function Applications.RunLuaFile(Path, HostPath, Host, Information)
 	local Data = FileSystem2.Read(Path)
 	
 	local PageData = nil
@@ -49,7 +49,7 @@ function Applications.RunLuaFile(Path, HostPath, Information)
 		
 		if Code == 200 then
 			--Generate the environment for our API
-			local Environment = Applications.GenerateEnvironment(HostPath)
+			local Environment = Applications.GenerateEnvironment(HostPath, Host)
 			
 			SetEnvironmentFunction(Application.GET, Environment)
 			
@@ -80,10 +80,18 @@ end
 --When initialize the library, load the first blacklist settings.
 Applications.ReloadEnvironmentBlacklist()
 
-function Applications.GenerateEnvironment(HostPath)
+function Applications.GenerateEnvironment(HostPath, Host)
 	--These are the variables/functions that will be accessible by the programmer on a .lua page
 	
 	local Environment = Table.Clone(InitialEnvironment)
+	
+	if Application.Blacklist.Global then
+		Utilities.LoadString(Application.Blacklist.Global, Environment)
+	end
+	
+	if Application.Blacklist[Host] then
+		Utilities.LoadString(Application.Blacklist[Host], Environment)
+	end
 	
 	Environment.FileSystem2 = {}
 	
