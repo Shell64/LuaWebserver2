@@ -64,10 +64,17 @@ local function GET(ClientConnection)
 			end
 			
 			if not (Attribute == "Data" or Attribute == "TotalSentBytes" or Attribute == "SentBytes" or Attribute == "DataSize" or Attribute == "BlockIndex" or Attribute == "GET" or Attribute:Substring(1, 1) == "_") then
-				Queue[Attribute] = Value:Substring(FoundSeparator + 1, #Value)
+				Queue[Attribute] = Value:Substring(FoundSeparator + 2, #Value)
 				HeaderInformation[Attribute] = HeaderInformation[Attribute]
 			end
 		end
+	end
+	
+	local Start = Queue.Host:Find(":")
+	
+	if Start then
+		Queue.HostFolder = Queue.Host:Substring(1, Start - 1)
+		Queue.Port = Queue.Host:Substring(Start + 1, #Queue.Host)
 	end
 	
 	--This code bellow will search for file in various directories.
@@ -128,9 +135,9 @@ local function GET(ClientConnection)
 	end
 	
 	--Try to find the requested file in the requested host directory. If it finds, Found variable will turn into a string containing the path for it, otherwise it will remain as boolean (false)
-	if FileSystem2.IsFile(Webserver.WWW .. Queue.Host .. "/" .. Queue.GET) then
-		Found = Webserver.WWW .. Queue.Host .. "/" .. Queue.GET
-		HostPath = Webserver.WWW .. Queue.Host .. "/"
+	if FileSystem2.IsFile(Webserver.WWW .. Queue.HostFolder .. "/" .. Queue.GET) then
+		Found = Webserver.WWW .. Queue.HostFolder .. "/" .. Queue.GET
+		HostPath = Webserver.WWW .. Queue.HostFolder .. "/"
 	end
 	
 	--If not found yet, try to find the requested file in the requested "default" directory. If it finds, Found variable will turn into a string containing the path for it, otherwise it will remain as boolean (false)
@@ -146,9 +153,9 @@ local function GET(ClientConnection)
 		for Key, Value in IteratePairs(Webserver.Index) do
 		
 			--Try to find the index file in requested host directory.
-			if FileSystem2.IsFile(Webserver.WWW .. Queue.Host .. "/" .. Queue.GET .. Value) then
-				Found = Webserver.WWW .. Queue.Host .. "/" .. Queue.GET .. Value
-				HostPath = Webserver.WWW .. Queue.Host .. "/"
+			if FileSystem2.IsFile(Webserver.WWW .. Queue.HostFolder .. "/" .. Queue.GET .. Value) then
+				Found = Webserver.WWW .. Queue.HostFolder .. "/" .. Queue.GET .. Value
+				HostPath = Webserver.WWW .. Queue.HostFolder .. "/"
 				break
 			end
 			
@@ -208,7 +215,7 @@ local function GET(ClientConnection)
 				ConnectionID = ClientConnection.ID,
 			}
 			
-			local PageData, Code = Applications.RunLuaFile(Found, HostPath, Information)
+			local PageData, Code = Applications.RunLuaFile(Found, HostPath, Queue.HostFolder, Information)
 			
 			--Generate the HTTP header and add it to queue for sending.
 			Queue.Data = HTTP.GenerateHeader(Code, {
