@@ -22,7 +22,7 @@ function Utilities.GetExtension(Str)
 end
 
 function Utilities.LoadString(Str, PassTable)
-	local CompiledCode, Err = LoadString("return function(PassTable) " .. Str .. " return PassTable end")
+	local CompiledCode, Err = LoadString("return function(PassTable) \n" .. Str .. "\n return PassTable end", "LoadedString")
 	
 	if CompiledCode then
 		local RunFunction = CompiledCode()
@@ -40,8 +40,5 @@ end
 
 --Stores the initial time date in this variable.
 Utilities.InitTime = Utilities.Date()
-
---When initialize the library, load the first blacklist settings.
---Applications.ReloadEnvironmentBlacklist()
 
 return Utilities

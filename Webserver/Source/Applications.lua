@@ -15,6 +15,7 @@ Applications.Blacklist = {}
 -------------------------------------
 --Methods for Application class.
 -------------------------------------
+Application.Blacklist = {}
 
 function Applications.RunLuaFile(Path, HostPath, Information)
 	local Data = FileSystem2.Read(Path)
@@ -34,7 +35,7 @@ function Applications.RunLuaFile(Path, HostPath, Information)
 		local CompiledCode, Err
 		
 		ProtectedCall(function()
-			CompiledCode, Err = LoadString("return function(Application) " .. Data .. " return Application end", Path)
+			CompiledCode, Err = LoadString("return function(Application) \n" .. Data .. "\n return Application end", Path)
 		end)
 		
 		if CompiledCode then
@@ -68,12 +69,16 @@ function Applications.RunLuaFile(Path, HostPath, Information)
 end
 
 function Applications.ReloadEnvironmentBlacklist()
-	local Data = FileSystem2.Read(Webserver.WWW .. "API_BlackList.lua")
+	local Data = FileSystem2.Read(Webserver.WWW .. "API_Blacklist.lua")
 	
 	if Data then
+		Application.Blacklist = {}
 		Utilities.LoadString(Data, Application.Blacklist)
 	end
 end
+
+--When initialize the library, load the first blacklist settings.
+Applications.ReloadEnvironmentBlacklist()
 
 function Applications.GenerateEnvironment(HostPath)
 	--These are the variables/functions that will be accessible by the programmer on a .lua page
