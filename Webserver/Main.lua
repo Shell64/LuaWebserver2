@@ -40,16 +40,19 @@ Webserver.Cache = {} --cache de arquivos
 -------------------------------------
 --Request required classes
 -------------------------------------
-Language = 		Require("Source/Language")
-MIME = 			Require("Source/MIME")
-HTTP = 			Require("Source/HTTP")
-Connection = 	Require("Source/Connection")
-Utilities = 	Require("Source/Utilities")
-Template = 		Require("Source/Template")
-HTML = 			Require("Source/HTML")
-Applications = 	Require("Source/Applications")
+Language = 				Require("Source/Language")
+MIME = 					Require("Source/MIME")
+HTTP = 					Require("Source/HTTP")
+SendQueueObject = 		Require("Source/Queues/SendQueueObject")
+ReceiveQueueObject = 	Require("Source/Queues/ReceiveQueueObject")
+Connection = 			Require("Source/Connection")
+Utilities = 			Require("Source/Utilities")
+Template = 				Require("Source/Template")
+HTML = 					Require("Source/HTML")
+Applications = 			Require("Source/Applications")
 
 GET = 	Require("Source/Methods/GET")
+POST = 	Require("Source/Methods/POST")
 
 -------------------------------------
 --Local variables for this file (faster for Lua)
@@ -107,27 +110,76 @@ function Webserver.Update(...)
 		
 		--Receive incoming data from connection
 		do
-			local Data, Closed = ClientConnection.ClientTCP:receive("*l")
+			local Data, Closed
+
+			if ClientConnection.ReceivingHeader then
+				Data, Closed = ClientConnection.ClientTCP:receive("*l")
+			else
+				local Data2
+				Data2, Closed = ClientConnection.ClientTCP:receive(1)
+				
+				if not Data and Data2 then
+					Data = ""
+				end
+				
+				while Data2 do
+					Data = Data .. Data2
+					Data2, Closed = ClientConnection.ClientTCP:receive(1)
+				end
+			end
 			
 			--If that received any data,
 			if Data then
 				--When a HTTP header ends, it sends a \n\n, so the incoming data in this case is "", means that the HTTP header
 				--was received. As we are reading every incoming line from socket, that will be "".
 				--So here, if we did receive the HTTP header,
-				if Data == "" then
-					
-					for Key, Value in IteratePairs(ClientConnection.IncomingData) do
-						--print(Value)
-					end
-					
-					--If that HEADER is a GET method.
-					if ClientConnection.IncomingData[1]:Substring(1, 3):Trim() == "GET" then
-						GET(ClientConnection)
-						ClientConnection.IncomingData = {}
+				if ClientConnection.ReceivingHeader then
+					if Data == "" then
+						local HeaderInformation = HTTP.ParseHeader(ClientConnection.ReceivedData)
+						
+						ClientConnection.ReceivedHeader = HeaderInformation
+						
+						if HeaderInformation["Content-Length"] then
+							ClientConnection.ContentLength = ToNumber(HeaderInformation["Content-Length"]) or 0
+							if ClientConnection.ContentLength > 0 then
+								print("Trying to receive " .. ClientConnection.ContentLength .. " bytes")
+								ClientConnection.ReceivingHeader = false
+							end
+						end
+						
+						if ClientConnection.ContentLength == 0 then
+							if HeaderInformation.Method == "GET" then
+								GET(ClientConnection, HeaderInformation)
+							
+							elseif HeaderInformation.Method == "POST" then
+								POST(ClientConnection, HeaderInformation, ClientConnection.ReceivedData)
+							end
+						end
+						
+						ClientConnection.ReceivedData = ""
+					else
+					--Else, it's just one more line and we need to add that to incoming data.
+						ClientConnection.ReceivedData = ClientConnection.ReceivedData .. Data .. "\n"
 					end
 				else
-				--Else, it's just one more line and we need to add that to incoming data.
-					ClientConnection.IncomingData[#ClientConnection.IncomingData + 1] = Data
+					--If data is still incomming, concaternate
+					if #ClientConnection.ReceivedData < ClientConnection.ContentLength then
+						ClientConnection.ReceivedData = ClientConnection.ReceivedData .. Data
+					
+						if #ClientConnection.ReceivedData >= ClientConnection.ContentLength then
+							if ClientConnection.ReceivedHeader.Method == "GET" then
+								GET(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "POST" then
+								POST(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							end
+							
+							ClientConnection.ReceivedData = ""
+							ClientConnection.ReceivingHeader = true
+						end
+					else
+						print("Something impossible happened?")
+					end
 				end
 			end
 			
@@ -145,10 +197,10 @@ function Webserver.Update(...)
 		
 		--Send the information from "Send data queue" to client.
 		do
-			if ClientConnection.Queue[1] then
-				local Queue = ClientConnection.Queue[1]
+			if ClientConnection.SendQueue[1] then
+				local Queue = ClientConnection.SendQueue[1]
 				
-				if not Queue.BlockData or ClientConnection.Queue[1].SentBytes == #Queue.BlockData then
+				if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData then
 					if Type(Queue.Data) == "string" then
 						Queue.BlockData = Queue.Data:Substring(Queue.BlockIndex * Webserver.SplitPacketSize + 1, Math.Minimum(Queue.BlockIndex * Webserver.SplitPacketSize + Webserver.SplitPacketSize, Queue.DataSize))
 						Queue.BlockIndex = Queue.BlockIndex + 1
@@ -157,15 +209,15 @@ function Webserver.Update(...)
 						Queue.BlockIndex = Queue.BlockIndex + 1
 					end
 					
-					ClientConnection.Queue[1].SentBytes = 0
+					ClientConnection.SendQueue[1].SentBytes = 0
 				end
 				
 				if Queue.BlockData then
-					local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.Queue[1].SentBytes, #Queue.BlockData))
+					local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.SendQueue[1].SentBytes, #Queue.BlockData))
 					
 					if SentBytes then
-						ClientConnection.Queue[1].SentBytes = ClientConnection.Queue[1].SentBytes + SentBytes
-						ClientConnection.Queue[1].TotalSentBytes = ClientConnection.Queue[1].TotalSentBytes + SentBytes
+						ClientConnection.SendQueue[1].SentBytes = ClientConnection.SendQueue[1].SentBytes + SentBytes
+						ClientConnection.SendQueue[1].TotalSentBytes = ClientConnection.SendQueue[1].TotalSentBytes + SentBytes
 					elseif SentBytes == 0 then
 						--if it is not sending any bytes, then the client is timing out
 					else
@@ -173,14 +225,14 @@ function Webserver.Update(...)
 					end
 				end
 				
-				if not Queue.BlockData or ClientConnection.Queue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
+				if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
 					--sometimes the data we are sending from queue is not a string, it might be streaming from a file, so we need to close it.
-					if Type(ClientConnection.Queue[1].Data) ~= "string" then
-						ClientConnection.Queue[1].Data:close()
+					if Type(ClientConnection.SendQueue[1].Data) ~= "string" then
+						ClientConnection.SendQueue[1].Data:close()
 					end
 					
 					--We did finish that item from queue.
-					Table.Remove(ClientConnection.Queue, 1)
+					Table.Remove(ClientConnection.SendQueue, 1)
 				end
 			end
 		end
@@ -189,4 +241,5 @@ end
 
 while true do
 	Webserver.Update()
+	Socket.sleep(0.001)
 end

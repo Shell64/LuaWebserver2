@@ -17,7 +17,7 @@ Applications.Blacklist = {}
 -------------------------------------
 Application.Blacklist = {}
 
-function Applications.RunLuaFile(Path, HostPath, Host, Information)
+function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
 	local Data = FileSystem2.Read(Path)
 	
 	local PageData = nil
@@ -51,10 +51,10 @@ function Applications.RunLuaFile(Path, HostPath, Host, Information)
 			--Generate the environment for our API
 			local Environment = Applications.GenerateEnvironment(HostPath, Host)
 			
-			SetEnvironmentFunction(Application.GET, Environment)
+			SetEnvironmentFunction(Application.POST, Environment)
 			
 			local Ok, Err = ProtectedCall(function()
-				PageData, Code = Application.GET(Information)
+				PageData, Code = Application.POST(Information)
 				Code = Code or 200
 			end)
 			
