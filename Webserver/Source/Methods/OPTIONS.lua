@@ -28,7 +28,7 @@ local function NotFound(URL)
 ]]
 end
 
-local function GET(ClientConnection, HeaderInformation, HeaderContent)
+local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 	local Queue = SendQueueObject.New()
 	
 	
@@ -87,7 +87,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 	
 	Extension = MIME[Extension] or MIME["*"]
 	
-	--If file was not found, send 404 and not found page or GET path is invalid
+	--If file was not found, send 404 and not found page or OPTIONS path is invalid
 	if not Found or HeaderInformation.MethodData:Find("..", nil, true) then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
@@ -127,6 +127,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 				["Accept-Ranges"] = "none",
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
+				["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
 			}
 			
 			for Key, Value in Pairs(OverriderAttributes) do
@@ -151,24 +152,15 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			--Generate the HTTP header and add it to queue for sending.
 			Queue.Data = 
 			HTTP.GenerateHeader(200, {
-				["Last-Modified"] = Utilities.GetDate(Attributes.modification) ,
-				["Accept-Ranges"] = "none",
-				["Content-Length"] = Attributes.size,
-				["Content-Type"] = Extension,
+				["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
 			})
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-		--	Queue.Data = FileSystem2.NewFile(Found)
-		--	Queue.DataSize = Attributes.size
-			Queue.Data = FileSystem2.Read(Found)
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
+			--OPTIONS should not return file content, just header. In case of .lua that's programmer's API which is reponsible for.
 		end
 	end
 	
 end
 
-return GET
+return OPTIONS

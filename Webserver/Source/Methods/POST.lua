@@ -120,16 +120,21 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 				ConnectionID = ClientConnection.ID,
 			}
 			
-			local PageData, Code = Applications.RunLuaFile(Found, HostPath, HeaderInformation.Method, HeaderInformation.HostFolder, Information, HeaderContent)
+			local PageData, Code, OverriderAttributes = Applications.RunLuaFile(Found, HostPath, HeaderInformation.Method, HeaderInformation.HostFolder, Information, HeaderContent)
 			
-			print("Answering: " .. Found)
-			--Generate the HTTP header and add it to queue for sending.
-			Queue.Data = HTTP.GenerateHeader(Code, {
+			local GenerateHeaderAttributes = {
 				["Last-Modified"] = Utilities.InitTime,
 				["Accept-Ranges"] = "none",
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
-			})
+			}
+			
+			for Key, Value in Pairs(OverriderAttributes) do
+				GenerateHeaderAttributes[Key] = Value
+			end
+			
+			--Generate the HTTP header and add it to queue for sending.
+			Queue.Data = HTTP.GenerateHeader(Code, GenerateHeaderAttributes)
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
@@ -139,27 +144,21 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-		--Else, its a file like any other, just send the data that it contains.
+		--Else, not found. POST should only run over a .lua file
 		else
-			local Attributes = FileSystem2.Attributes(Found)
-			
-			--Generate the HTTP header and add it to queue for sending.
-			Queue.Data = 
-			HTTP.GenerateHeader(200, {
-				["Last-Modified"] = Utilities.GetDate(Attributes.modification) ,
+			local IP, Port = ClientConnection.ClientTCP:getpeername()
+			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+		
+			Queue.Data = HTTP.GenerateHeader(404, {
+				["Last-Modified"] = Utilities.InitTime,
 				["Accept-Ranges"] = "none",
-				["Content-Length"] = Attributes.size,
-				["Content-Type"] = Extension,
+				["Content-Length"] = #NotFound(HeaderInformation.MethodData),
+				["Content-Type"] = "text/html; charset=iso-8859-1",
 			})
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-		--	Queue.Data = FileSystem2.NewFile(Found)
-		--	Queue.DataSize = Attributes.size
-			Queue.Data = FileSystem2.Read(Found)
+			Queue.Data = Queue.Data .. NotFound(HeaderInformation.MethodData)
 			Queue.DataSize = #Queue.Data
+			
 			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
 	end

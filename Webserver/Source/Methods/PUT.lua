@@ -28,7 +28,7 @@ local function NotFound(URL)
 ]]
 end
 
-local function GET(ClientConnection, HeaderInformation, HeaderContent)
+local function PUT(ClientConnection, HeaderInformation, HeaderContent)
 	local Queue = SendQueueObject.New()
 	
 	
@@ -87,7 +87,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 	
 	Extension = MIME[Extension] or MIME["*"]
 	
-	--If file was not found, send 404 and not found page or GET path is invalid
+	--If file was not found, send 404 and not found page or PUT path is invalid
 	if not Found or HeaderInformation.MethodData:Find("..", nil, true) then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
@@ -144,31 +144,25 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-		--Else, its a file like any other, just send the data that it contains.
+		--Else, not found. PUT should only run over a .lua file
 		else
-			local Attributes = FileSystem2.Attributes(Found)
-			
-			--Generate the HTTP header and add it to queue for sending.
-			Queue.Data = 
-			HTTP.GenerateHeader(200, {
-				["Last-Modified"] = Utilities.GetDate(Attributes.modification) ,
+			local IP, Port = ClientConnection.ClientTCP:getpeername()
+			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+		
+			Queue.Data = HTTP.GenerateHeader(404, {
+				["Last-Modified"] = Utilities.InitTime,
 				["Accept-Ranges"] = "none",
-				["Content-Length"] = Attributes.size,
-				["Content-Type"] = Extension,
+				["Content-Length"] = #NotFound(HeaderInformation.MethodData),
+				["Content-Type"] = "text/html; charset=iso-8859-1",
 			})
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-		--	Queue.Data = FileSystem2.NewFile(Found)
-		--	Queue.DataSize = Attributes.size
-			Queue.Data = FileSystem2.Read(Found)
+			Queue.Data = Queue.Data .. NotFound(HeaderInformation.MethodData)
 			Queue.DataSize = #Queue.Data
+			
 			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
 	end
 	
 end
 
-return GET
+return PUT

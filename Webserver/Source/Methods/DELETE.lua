@@ -28,7 +28,7 @@ local function NotFound(URL)
 ]]
 end
 
-local function GET(ClientConnection, HeaderInformation, HeaderContent)
+local function DELETE(ClientConnection, HeaderInformation, HeaderContent)
 	local Queue = SendQueueObject.New()
 	
 	
@@ -87,7 +87,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 	
 	Extension = MIME[Extension] or MIME["*"]
 	
-	--If file was not found, send 404 and not found page or GET path is invalid
+	--If file was not found, send 404 and not found page or DELETE path is invalid
 	if not Found or HeaderInformation.MethodData:Find("..", nil, true) then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
@@ -171,4 +171,4 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 	
 end
 
-return GET
+return DELETE
