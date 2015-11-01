@@ -51,8 +51,12 @@ Template = 				Require("Source/Template")
 HTML = 					Require("Source/HTML")
 Applications = 			Require("Source/Applications")
 
-GET = 	Require("Source/Methods/GET")
-POST = 	Require("Source/Methods/POST")
+GET = 		Require("Source/Methods/GET")
+POST = 		Require("Source/Methods/POST")
+PUT = 		Require("Source/Methods/PUT")
+HEAD = 		Require("Source/Methods/HEAD")
+DELETE = 	Require("Source/Methods/DELETE")
+OPTIONS = 	Require("Source/Methods/OPTIONS")
 
 -------------------------------------
 --Local variables for this file (faster for Lua)
