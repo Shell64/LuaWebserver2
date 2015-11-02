@@ -92,7 +92,6 @@ function Excluir(Objeto)
 end
 
 function Application.POST(Information, Content)
-	print(Content)
 	local Whatever, Error
 
 	if Content then
