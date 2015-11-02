@@ -122,6 +122,16 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 			
 			local PageData, Code, OverriderAttributes = Applications.RunLuaFile(Found, HostPath, HeaderInformation.Method, HeaderInformation.HostFolder, Information, HeaderContent)
 			
+			if Code and Type(Code) ~= "number" then
+				Code = 500 --Internal Server Error
+				PageData = HTTP.ResponseCodes[Code] .. "Page did not return a valid code."
+			end
+			
+			if PageData and Type(PageData) ~= "string" then
+				Code = 500 --Internal Server Error
+				PageData = HTTP.ResponseCodes[Code] .. "Page did not return a valid content."
+			end
+			
 			local GenerateHeaderAttributes = {
 				["Last-Modified"] = Utilities.InitTime,
 				["Accept-Ranges"] = "none",
@@ -129,8 +139,10 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 				["Content-Type"] = Extension,
 			}
 			
-			for Key, Value in Pairs(OverriderAttributes) do
-				GenerateHeaderAttributes[Key] = Value
+			if OverriderAttributes and Type(OverriderAttributes) == "table" then
+				for Key, Value in Pairs(OverriderAttributes) do
+					GenerateHeaderAttributes[Key] = Value
+				end
 			end
 			
 			--Generate the HTTP header and add it to queue for sending.
