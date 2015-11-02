@@ -164,7 +164,6 @@ function Webserver.Update(...)
 						if HeaderInformation["Content-Length"] then
 							ClientConnection.ContentLength = ToNumber(HeaderInformation["Content-Length"]) or 0
 							if ClientConnection.ContentLength > 0 then
-								print("Trying to receive " .. ClientConnection.ContentLength .. " bytes")
 								ClientConnection.ReceivingHeader = false
 							end
 						end
