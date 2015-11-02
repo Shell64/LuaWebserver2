@@ -172,6 +172,14 @@ function HTTP.ParseHeader(HTTP_Header)
 		end
 	end
 	
+	if HeaderInformation.HostFolder then
+		HeaderInformation.HostFolder = HeaderInformation.HostFolder:GSubstring("%.", "")
+	end
+	
+	if HeaderInformation.MethodData then
+		HeaderInformation.MethodData = Utilities.FixPath(HeaderInformation.MethodData)
+	end
+	
 	return HeaderInformation
 end
 

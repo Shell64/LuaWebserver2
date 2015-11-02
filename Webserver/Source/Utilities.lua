@@ -21,6 +21,24 @@ function Utilities.GetExtension(Str)
 	return ""
 end
 
+--Prevent paths with ../../ or with dots.
+function Utilities.FixPath(Str)
+	local Start = #Str
+	
+	for I = #Str, 1, -1 do
+		if Str:Substring(I, I) == "." then
+			Start = I
+			break
+		end
+	end
+	
+	Str = Str:Substring(1, Start - 1):GSubstring("%.", "") .. "." .. Str:Substring(Start + 1, #Str)
+	
+	Str = Str == "." and "" or Str
+	
+	return Str
+end
+
 function Utilities.LoadString(Str, PassTable)
 	local CompiledCode, Err = LoadString("return function(PassTable) \n" .. Str .. "\n return PassTable end", "LoadedString")
 	
