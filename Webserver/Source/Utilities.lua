@@ -24,17 +24,20 @@ end
 --Prevent paths with ../../ or with dots.
 function Utilities.FixPath(Str)
 	local Start = #Str
-	
+	local Found = false
 	for I = #Str, 1, -1 do
 		if Str:Substring(I, I) == "." then
 			Start = I
+			Found = true
 			break
 		end
 	end
 	
-	Str = Str:Substring(1, Start - 1):GSubstring("%.", "") .. "." .. Str:Substring(Start + 1, #Str)
-	
-	Str = Str == "." and "" or Str
+	if Found then
+		Str = Str:Substring(1, Start - 1):GSubstring("%.", "") .. "." .. Str:Substring(Start + 1, #Str)
+		
+		Str = Str == "." and "" or Str
+	end
 	
 	return Str
 end
