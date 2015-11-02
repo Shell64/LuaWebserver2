@@ -25,6 +25,15 @@ end
 function Utilities.FixPath(Str)
 	while Str:Find("..", nil, true) do
 		Str = Str:GSubstring("%.%.", "")
+		
+	end
+	
+	while Str:Find("//", nil, true) do
+		Str = Str:GSubstring("//", "/")
+	end
+	
+	while Str:Find("\\\\", nil, true) do
+		Str = Str:GSubstring("\\\\", "\\")
 	end
 	
 	return Str

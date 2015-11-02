@@ -29,6 +29,7 @@ local function NotFound(URL)
 end
 
 local function DELETE(ClientConnection, HeaderInformation, HeaderContent)
+	print("DELETE!!!")
 	local Queue = SendQueueObject.New()
 	
 	
@@ -93,13 +94,12 @@ local function DELETE(ClientConnection, HeaderInformation, HeaderContent)
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
 	
 		Queue.Data = HTTP.GenerateHeader(404, {
-			["Last-Modified"] = Utilities.InitTime,
-			["Accept-Ranges"] = "none",
-			["Content-Length"] = #NotFound(HeaderInformation.MethodData),
-			["Content-Type"] = "text/html; charset=iso-8859-1",
+			["Date"] = Utilities.GetDate(),
+			["Connection"] = "close",
+			["Pragma"] = "no-cache",
 		})
 		
-		Queue.Data = Queue.Data .. NotFound(HeaderInformation.MethodData)
+		Queue.Data = Queue.Data
 		Queue.DataSize = #Queue.Data
 		
 		Table.Insert(ClientConnection.SendQueue, Queue)
@@ -128,16 +128,21 @@ local function DELETE(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			if PageData and Type(PageData) ~= "string" then
-				Code = 500 --Internal Server Error
 				PageData = HTTP.ResponseCodes[Code] .. "Page did not return a valid content."
 			end
 			
 			local GenerateHeaderAttributes = {
-				["Last-Modified"] = Utilities.InitTime,
-				["Accept-Ranges"] = "none",
+				["Date"] = Utilities.GetDate(),
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
+				["Connection"] = "close",
+				["Pragma"] = "no-cache",
 			}
+			
+			if #PageData == 0 then
+				GenerateHeaderAttributes["Content-Length"] = nil
+			end
+				
 			
 			if OverriderAttributes and Type(OverriderAttributes) == "table" then
 				for Key, Value in Pairs(OverriderAttributes) do
@@ -150,33 +155,29 @@ local function DELETE(ClientConnection, HeaderInformation, HeaderContent)
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-			Queue.Data = PageData
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
+			
+			if #PageData > 0 then
+				--Add the data to queue for sending.
+				local Queue = SendQueueObject.New()
+				Queue.Data = PageData
+				Queue.DataSize = #Queue.Data
+				Table.Insert(ClientConnection.SendQueue, Queue)
+			end
 			
 		--Else, its a file like any other, just send the data that it contains.
 		else
-			local Attributes = FileSystem2.Attributes(Found)
-			
-			--Generate the HTTP header and add it to queue for sending.
-			Queue.Data = 
-			HTTP.GenerateHeader(200, {
-				["Last-Modified"] = Utilities.GetDate(Attributes.modification) ,
-				["Accept-Ranges"] = "none",
-				["Content-Length"] = Attributes.size,
-				["Content-Type"] = Extension,
+			local IP, Port = ClientConnection.ClientTCP:getpeername()
+			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+		
+			Queue.Data = HTTP.GenerateHeader(404, {
+				["Date"] = Utilities.GetDate(),
+				["Connection"] = "close",
+				["Pragma"] = "no-cache",
 			})
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-		--	Queue.Data = FileSystem2.NewFile(Found)
-		--	Queue.DataSize = Attributes.size
-			Queue.Data = FileSystem2.Read(Found)
+			Queue.Data = Queue.Data
 			Queue.DataSize = #Queue.Data
+			
 			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
 	end

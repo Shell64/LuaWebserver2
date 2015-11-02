@@ -103,12 +103,85 @@ function Applications.GenerateEnvironment(HostPath, Host)
 		Utilities.LoadString(Application.Blacklist[Host], Environment)
 	end
 	
+	Environment.JSON = Table.Clone(JSON)
+	
 	Environment.FileSystem2 = {}
 	
-	function Environment.FileSystem2.Read(Path)
-		return FileSystem2.Read(HostPath .. Path)
+	do
+		local Append = FileSystem2.Append
+		function Environment.FileSystem2.Append(Path, Data)
+			Path = HostPath .. Utilities.FixPath(Path)
+			print(Path)
+			return Append(Path, Data)
+		end
+
+		local GetSize = FileSystem2.GetSize
+		function Environment.FileSystem2.GetSize(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return GetSize(Path)
+		end
+
+		local CreateDirectory = FileSystem2.CreateDirectory
+		function Environment.FileSystem2.CreateDirectory(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return CreateDirectory(Path)
+		end
+
+		local IsFile = FileSystem2.IsFile
+		function Environment.FileSystem2.IsFile(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return IsFile(Path)
+		end
+
+		local IsDirectory = FileSystem2.IsDirectory
+		function Environment.FileSystem2.IsDirectory(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return IsDirectory(Path)
+		end
+
+		local IsSymlink = FileSystem2.IsSymlink
+		function Environment.FileSystem2.IsSymlink(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return IsSymlink(Path)
+		end
+
+		local Load = FileSystem2.Load
+		function Environment.FileSystem2.Load(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return Load(Path)
+		end
+
+		local NewFile = FileSystem2.NewFile
+		function Environment.FileSystem2.NewFile(Path, Mode)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return NewFile(Path, Mode)
+		end
+
+		local Read = FileSystem2.Read
+		function Environment.FileSystem2.Read(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return Read(Path)
+		end
+
+		local Remove = FileSystem2.Remove
+		function Environment.FileSystem2.Remove(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return Remove(Path)
+		end
+
+		local Write = FileSystem2.Write
+		function Environment.FileSystem2.Write(Path, Data)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return Write(Path, Data)
+		end
+
+		local Attributes = Attributes
+		function Environment.FileSystem2.Attributes(Path)
+			Path = HostPath .. Utilities.FixPath(Path)
+			return Attributes(Path)
+		end
 	end
-	
+		
 	Environment.HTML = {}
 	
 	Environment.HTML.Table = HTML.Table

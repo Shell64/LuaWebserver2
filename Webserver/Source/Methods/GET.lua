@@ -128,7 +128,6 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			if PageData and Type(PageData) ~= "string" then
-				Code = 500 --Internal Server Error
 				PageData = HTTP.ResponseCodes[Code] .. "Page did not return a valid content."
 			end
 			
@@ -138,6 +137,11 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
 			}
+			
+			if #PageData == 0 then
+				GenerateHeaderAttributes["Content-Length"] = nil
+			end
+				
 			
 			if OverriderAttributes and Type(OverriderAttributes) == "table" then
 				for Key, Value in Pairs(OverriderAttributes) do

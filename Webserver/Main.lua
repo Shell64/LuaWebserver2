@@ -193,6 +193,18 @@ function Webserver.Update(...)
 							
 							elseif ClientConnection.ReceivedHeader.Method == "POST" then
 								POST(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "PUT" then
+								PUT(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "DELETE" then
+								DELETE(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "HEAD" then
+								HEAD(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+								
+							elseif ClientConnection.ReceivedHeader.Method == "OPTIONS" then
+								OPTIONS(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
 							end
 							
 							ClientConnection.ReceivedData = ""

@@ -29,6 +29,7 @@ local function NotFound(URL)
 end
 
 local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
+	print("OPTIONS!!!")
 	local Queue = SendQueueObject.New()
 	
 	
@@ -93,13 +94,13 @@ local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
 	
 		Queue.Data = HTTP.GenerateHeader(404, {
-			["Last-Modified"] = Utilities.InitTime,
-			["Accept-Ranges"] = "none",
-			["Content-Length"] = #NotFound(HeaderInformation.MethodData),
-			["Content-Type"] = "text/html; charset=iso-8859-1",
+			["Date"] = Utilities.GetDate(),
+			["Connection"] = "close",
+			["Pragma"] = "no-cache",
+			["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
 		})
 		
-		Queue.Data = Queue.Data .. NotFound(HeaderInformation.MethodData)
+		Queue.Data = Queue.Data
 		Queue.DataSize = #Queue.Data
 		
 		Table.Insert(ClientConnection.SendQueue, Queue)
@@ -128,16 +129,22 @@ local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			if PageData and Type(PageData) ~= "string" then
-				Code = 500 --Internal Server Error
 				PageData = HTTP.ResponseCodes[Code] .. "Page did not return a valid content."
 			end
 			
 			local GenerateHeaderAttributes = {
-				["Last-Modified"] = Utilities.InitTime,
-				["Accept-Ranges"] = "none",
+				["Date"] = Utilities.GetDate(),
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
+				["Connection"] = "close",
+				["Pragma"] = "no-cache",
+				["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
 			}
+			
+			if #PageData == 0 then
+				GenerateHeaderAttributes["Content-Length"] = nil
+			end
+				
 			
 			if OverriderAttributes and Type(OverriderAttributes) == "table" then
 				for Key, Value in Pairs(OverriderAttributes) do
@@ -150,25 +157,31 @@ local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-			Queue.Data = PageData
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
+			
+			if #PageData > 0 then
+				--Add the data to queue for sending.
+				local Queue = SendQueueObject.New()
+				Queue.Data = PageData
+				Queue.DataSize = #Queue.Data
+				Table.Insert(ClientConnection.SendQueue, Queue)
+			end
 			
 		--Else, its a file like any other, just send the data that it contains.
 		else
-			local Attributes = FileSystem2.Attributes(Found)
-			
-			--Generate the HTTP header and add it to queue for sending.
-			Queue.Data = 
-			HTTP.GenerateHeader(200, {
+			local IP, Port = ClientConnection.ClientTCP:getpeername()
+			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+		
+			Queue.Data = HTTP.GenerateHeader(404, {
+				["Date"] = Utilities.GetDate(),
+				["Connection"] = "close",
+				["Pragma"] = "no-cache",
 				["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
 			})
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
 			
-			--OPTIONS should not return file content, just header. In case of .lua that's programmer's API which is reponsible for.
+			Queue.Data = Queue.Data
+			Queue.DataSize = #Queue.Data
+			
+			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
 	end
 	

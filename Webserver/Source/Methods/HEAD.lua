@@ -95,11 +95,10 @@ local function HEAD(ClientConnection, HeaderInformation, HeaderContent)
 		Queue.Data = HTTP.GenerateHeader(404, {
 			["Last-Modified"] = Utilities.InitTime,
 			["Accept-Ranges"] = "none",
-			["Content-Length"] = #NotFound(HeaderInformation.MethodData),
 			["Content-Type"] = "text/html; charset=iso-8859-1",
 		})
 		
-		Queue.Data = Queue.Data .. NotFound(HeaderInformation.MethodData)
+		Queue.Data = Queue.Data
 		Queue.DataSize = #Queue.Data
 		
 		Table.Insert(ClientConnection.SendQueue, Queue)
@@ -128,16 +127,19 @@ local function HEAD(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			if PageData and Type(PageData) ~= "string" then
-				Code = 500 --Internal Server Error
 				PageData = HTTP.ResponseCodes[Code] .. "Page did not return a valid content."
 			end
 			
 			local GenerateHeaderAttributes = {
 				["Last-Modified"] = Utilities.InitTime,
 				["Accept-Ranges"] = "none",
-				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
 			}
+			
+			if #PageData == 0 then
+				GenerateHeaderAttributes["Content-Length"] = nil
+			end
+				
 			
 			if OverriderAttributes and Type(OverriderAttributes) == "table" then
 				for Key, Value in Pairs(OverriderAttributes) do
@@ -147,12 +149,6 @@ local function HEAD(ClientConnection, HeaderInformation, HeaderContent)
 			
 			--Generate the HTTP header and add it to queue for sending.
 			Queue.Data = HTTP.GenerateHeader(Code, GenerateHeaderAttributes)
-			Queue.DataSize = #Queue.Data
-			Table.Insert(ClientConnection.SendQueue, Queue)
-			
-			--Add the data to queue for sending.
-			local Queue = SendQueueObject.New()
-			Queue.Data = PageData
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
@@ -169,8 +165,6 @@ local function HEAD(ClientConnection, HeaderInformation, HeaderContent)
 			})
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
-			
-			--HEAD should not return file content, just header. In case of .lua that's programmer's API which is reponsible for.
 		end
 	end
 	
