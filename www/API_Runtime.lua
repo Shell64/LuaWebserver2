@@ -24,3 +24,41 @@ do
 		end
 	end
 end
+
+--Check if a table has the right format (useful for checking json tables)
+--Format example:
+--[[
+	Format = {
+		address = "string",
+		age = "number",
+		name = "string",
+		inventory = {
+			["%n"] = "string"
+		}
+	}
+]]
+function CheckTableFormat(Table, Format)
+	for Key, Value in pairs(Table) do
+		if type(Key) == "number" then
+			Key = "%n"
+		end
+		
+		if type(Value) ~= "table" then
+			if not Format[Key] then
+				return false
+			else
+				if Format[Key] ~= type(Value) then
+					return false
+				end
+			end
+		else
+			local Result = CheckFormat(Table, Format[Key])
+			if not Result then
+				return false
+			end
+		end
+		
+	end
+	
+	return true
+end
