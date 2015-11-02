@@ -29,7 +29,6 @@ local function NotFound(URL)
 end
 
 local function POST(ClientConnection, HeaderInformation, HeaderContent)
-	print("POST!!!")
 	local Queue = SendQueueObject.New()
 	
 	
@@ -94,7 +93,6 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
 	
 		Queue.Data = HTTP.GenerateHeader(404, {
-			["Date"] = Utilities.GetDate(),
 			["Connection"] = "close",
 			["Pragma"] = "no-cache",
 		})
@@ -132,7 +130,6 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			local GenerateHeaderAttributes = {
-				["Date"] = Utilities.GetDate(),
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
 				["Connection"] = "close",
@@ -170,7 +167,6 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
 		
 			Queue.Data = HTTP.GenerateHeader(404, {
-				["Date"] = Utilities.GetDate(),
 				["Connection"] = "close",
 				["Pragma"] = "no-cache",
 			})

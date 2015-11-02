@@ -44,7 +44,7 @@ Require("socket")
 -------------------------------------
 
 Webserver = {}
-Webserver.Name = "LuaWebserver"
+Webserver.Name = "Lua Webserver"
 Webserver.Version = {Major = 2, Minor = 0, Revision = 0}
 
 Require("Config")

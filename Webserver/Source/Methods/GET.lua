@@ -97,6 +97,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			["Accept-Ranges"] = "none",
 			["Content-Length"] = #NotFound(HeaderInformation.MethodData),
 			["Content-Type"] = "text/html; charset=iso-8859-1",
+			["ETag"] = SHA1(Utilities.Date()),
 		})
 		
 		Queue.Data = Queue.Data .. NotFound(HeaderInformation.MethodData)
@@ -132,10 +133,11 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			local GenerateHeaderAttributes = {
-				["Last-Modified"] = Utilities.InitTime,
+				["Last-Modified"] = Utilities.Date(),
 				["Accept-Ranges"] = "none",
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
+				["ETag"] = SHA1(Found .. Utilities.Date()),
 			}
 			
 			if #PageData == 0 then
@@ -167,10 +169,11 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			--Generate the HTTP header and add it to queue for sending.
 			Queue.Data = 
 			HTTP.GenerateHeader(200, {
-				["Last-Modified"] = Utilities.GetDate(Attributes.modification) ,
+				["Last-Modified"] = Utilities.GetDate(Attributes.modification),
 				["Accept-Ranges"] = "none",
 				["Content-Length"] = Attributes.size,
 				["Content-Type"] = Extension,
+				["ETag"] = SHA1(Found .. Utilities.GetDate(Attributes.modification)),
 			})
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)

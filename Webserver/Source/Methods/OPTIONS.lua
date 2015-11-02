@@ -29,7 +29,6 @@ local function NotFound(URL)
 end
 
 local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
-	print("OPTIONS!!!")
 	local Queue = SendQueueObject.New()
 	
 	
@@ -94,7 +93,6 @@ local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
 	
 		Queue.Data = HTTP.GenerateHeader(404, {
-			["Date"] = Utilities.GetDate(),
 			["Connection"] = "close",
 			["Pragma"] = "no-cache",
 			["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
@@ -133,7 +131,6 @@ local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 			end
 			
 			local GenerateHeaderAttributes = {
-				["Date"] = Utilities.GetDate(),
 				["Content-Length"] = #PageData,
 				["Content-Type"] = Extension,
 				["Connection"] = "close",
@@ -172,7 +169,6 @@ local function OPTIONS(ClientConnection, HeaderInformation, HeaderContent)
 			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
 		
 			Queue.Data = HTTP.GenerateHeader(404, {
-				["Date"] = Utilities.GetDate(),
 				["Connection"] = "close",
 				["Pragma"] = "no-cache",
 				["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, HEAD, OPTIONS",
