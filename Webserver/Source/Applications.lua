@@ -20,7 +20,7 @@ Application.Blacklist = {}
 
 Application.Runtime = FileSystem2.Read(Webserver.WWW .. "API_Runtime.lua")
 
-function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
+function Applications.RunLuaFile(Path, HostPath, Method, Host, Information, HeaderContent)
 	local Data = FileSystem2.Read(Path)
 	
 	local PageData = nil
@@ -62,7 +62,7 @@ function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
 			SetEnvironmentFunction(Application[Method], Environment)
 			
 			local Ok, Err = ProtectedCall(function()
-				PageData, Code = Application[Method](Information)
+				PageData, Code = Application[Method](Information, HeaderContent)
 				Code = Code or 200
 			end)
 			
