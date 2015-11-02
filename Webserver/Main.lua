@@ -34,6 +34,7 @@ InitialEnvironment = CloneTable(_G)
 				Require("Libraries/String/String")
 Class = 		Require("Libraries/Class/Class")
 FileSystem2 = 	Require("Libraries/FileSystem2/FileSystem2")
+JSON =			Require("Libraries/DKJSON/DKJSON")
 
 Require("socket")
 
