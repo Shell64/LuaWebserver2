@@ -3,6 +3,22 @@
 
 --Block for all websites hosted.
 PassTable.Global = [[
+	local oldloadstring = PassTable.loadstring
+	local setfenv = PassTable.setfenv
+	local getfenv = PassTable.getfenv
+	
+	function PassTable.loadstring(s, chunkname)
+		local f, message = oldloadstring(s, chunkname)
+		
+		if not f then
+			return f, message
+		end
+		
+		setfenv(f, getfenv(2))
+		
+		return f
+	end
+
 	PassTable.rawequal = nil
 	PassTable.rawget = nil
 	PassTable.rawset = nil
