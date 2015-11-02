@@ -2,6 +2,23 @@
 
 local Require = require
 
+local function CloneTable(Tab)
+	local Clone = {}
+	
+	for Key, Value in pairs(Tab) do
+		if type(Value) == "table" then
+			Clone[Key] = {}
+			for Key2, Value2 in pairs(Value) do
+				Clone[Key][Key2] = Value2
+			end
+		else
+			Clone[Key] = Value
+		end
+	end
+	
+	return Clone
+end
+
 -------------------------------------
 --Add library paths
 -------------------------------------
@@ -11,9 +28,9 @@ package.path = package.path .. ";../../Webserver/?.lua"
 -------------------------------------
 --Request required libraries
 -------------------------------------
+InitialEnvironment = CloneTable(_G)
 				Require("Libraries/Wrap/Wrap")
 				Require("Libraries/Table/Table")
-InitialEnvironment = Table.Clone(_G)
 				Require("Libraries/String/String")
 Class = 		Require("Libraries/Class/Class")
 FileSystem2 = 	Require("Libraries/FileSystem2/FileSystem2")
