@@ -1,5 +1,9 @@
-function Table.Clone(Tab)
+function Table.Clone(Tab, Meta)
 	local Clone = {}
+	
+	if Meta then
+		setmetatable(Tab, Meta)
+	end
 	
 	for Key, Value in Pairs(Tab) do
 		if Type(Value) == "table" then
