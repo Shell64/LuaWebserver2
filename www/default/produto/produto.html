@@ -1,0 +1,50 @@
+﻿<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="../resources/css/formularios.css">
+		<link rel="stylesheet" type="text/css" href="../resources/css/produto.css">
+        <script src="../resources/js/jquery-1.11.1.min.js"></script>
+        <script src="../resources/js/Produto.js"></script>
+        <script>
+            $(document).ready(function () {
+                PreencherTabela();
+            });
+        </script>
+	</head>
+			
+	<body>
+		<h1>Produtos</h1>
+		<hr class="hr_cabecario"/>
+		<div class="formulario">
+			<h2>Cadastrados</h2>
+			<div class="div_tbl">
+				<table id="tb_produtos" border="1" style="width:100%">
+                    <thead>
+					    <tr>
+						    <td style="width:32px;" class="tbl_titulo">Alterar</td>
+						    <td style="width:32px;" class="tbl_titulo">Excluir</td>
+						    <td style="width:32px;" class="tbl_titulo">ID</td>
+						    <td style="width:70%;" class="tbl_titulo">Nome</td>
+						    <td style="width:10%" class="tbl_titulo">Valor (R$)</td>
+						    <td class="tbl_titulo">Quantidade</td>
+					    </tr>
+					</thead>
+                    <tbody>
+
+                    </tbody>
+				</table>
+			</div>
+			<hr/>
+			
+			<div class="div_final">
+				<div class="div_final">
+				<p>
+					<a href="produto_cadastrar.html" target="conteudo" tabindex="-1">
+						<input class="btn_submit" type="submit" id="cadastrar" title="Cadastrar" value="Cadastrar" autofocus/>
+					<a>
+				</p>
+			</div>
+			</div>
+		</div>
+	</body>
+</html>

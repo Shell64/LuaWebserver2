@@ -1,0 +1,48 @@
+﻿<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="../resources/css/formularios.css">
+		<link rel="stylesheet" type="text/css" href="../resources/css/funcionario.css">
+        <script src="../resources/js/jquery-1.11.1.min.js"></script>
+        <script src="../resources/js/Funcionario.js"></script>
+        <script>
+            $(document).ready(function () {
+                PreencherTabela();
+            });
+        </script>
+	</head>
+			
+	<body>
+		<h1>Funcionários</h1>
+		<hr class="hr_cabecario"/>
+		<div class="formulario">
+			<h2>Cadastrados</h2>
+			<div class="div_tbl">
+				<table id="tb_funcionarios" border="1" style="width:100%">
+                    <thead>
+					    <tr>
+						    <td style="width:16px;" class="tbl_titulo">Alterar</td>
+						    <td style="width:16px;" class="tbl_titulo">Excluir</td>
+						    <td style="width:32px;" class="tbl_titulo">ID</td>
+						    <td style="width:70%;" class="tbl_titulo">Nome</td>
+						    <td style="width:32px" class="tbl_titulo">CPF</td>
+						    <td class="tbl_titulo">Cargo</td>
+					    </tr>
+                    </thead>
+					<tbody>
+
+					</tbody>
+				</table>
+			</div>
+			<hr/>
+			
+			<div class="div_final">
+				<p>
+					<a href="funcionario_cadastrar.html" target="conteudo" tabindex="-1">
+						<input class="btn_submit" type="submit" id="cadastrar" title="Cadastrar" value="Cadastrar" autofocus/>
+					<a>
+				</p>
+			</div>
+		</div>
+	</body>
+</html>

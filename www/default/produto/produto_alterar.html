@@ -1,0 +1,56 @@
+﻿<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+	<link rel="stylesheet" type="text/css" href="../resources/css/formularios.css">
+	<link rel="stylesheet" type="text/css" href="../resources/css/produto.css">
+    <script src="../resources/js/jquery-1.11.1.min.js"></script>
+    <script src="../resources/js/Produto.js"></script>
+    <script> PreencherFormulario(); </script>
+</head>
+		
+<body>
+	<form id="form1" action="javascript:void(0);">
+		<div class="formulario">
+			<h1>Alterar Produto</h1>
+			<hr class="hr_cabecario"/>
+			<div class="div_identificacao">
+				<h2>Identificação</h2>
+				<div class="div_nome_fornecedor">
+					<label>* Nome</label>
+					<input type="text" pattern="[A-Za-z\s]+$" placeholder="Digite o nome" maxlength=80 id="nome" title="Nome" value="" style="width: 100%;" autofocus required/>
+				</div>
+				<div class="div_nome_fornecedor">
+					<label>* Fornecedor</label>
+					<select id="fornecedor" title="Fornecedor" style="width: 100%;">
+					</select>
+				</div>
+			</div>
+			<hr/>
+			
+			<div class="div_informacoes">
+				<h2>Informações</h2>
+				<div class="div_descricao">
+					<label>Descrição</label>
+					<input type="text" placeholder="Digite a descrição" maxlength=256 id="descricao" title="Descrição" value="" style="width: 100%;"/>
+				</div>
+				<div class="div_quantidade_valor">
+					<label>* Quantidade em estoque</label>
+					<input type="number" placeholder="Digite a quantidade em estoque" maxlength=30 id="qtd_estoque" title="Quantidade em estoque" value="" min=0 style="width: 100%;" required/>
+				</div>
+				<div class="div_quantidade_valor">
+					<label>* Valor (R$)</label>
+					<input type="text" pattern="^\d+(\.)\d{2}$" placeholder="Ex. 25.00" maxlength=50 id="valor" title="Valor em reais" value="" style="width: 100%;" required/>
+				</div>
+			</div>
+			<hr/>
+			
+			<div class="div_final">
+				<p><a class="informativo" title="Observação: Os campos marcados com * são obrigatórios." >Obs: Os campos marcados com * são obrigatórios. </a>
+				<p><input class="btn_submit" type="submit" id="alterar" title="Alterar" value="Alterar" onclick="Alterar(this)"/></p>
+			</div>
+	</form>
+	<div class="conteudo">
+		
+	</div>
+</body>
+</html>

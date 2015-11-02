@@ -1,0 +1,60 @@
+hr {
+	margin-left: 4.65%;
+	width: 91%;
+	border-style: inset;
+	border-width: 1px;
+	border-color: #EEE;
+}
+
+.hr_cabecario {
+	margin-left: 0%;
+	width: 100%;
+	border-color: #CCC;
+}
+
+.div_identificacao {
+	width: 100%;
+	height: 96px;
+}
+
+.div_informacoes {
+	width: 100%;
+	height: 145px;
+}
+
+.div_final {
+	width: 100%;
+	height: 96px;
+}
+
+p {
+	text-align: center;
+}
+
+/* a informativo */
+.informativo {
+	font-family: 'Font1';
+	font-size: 14px;
+	color: #777;
+}
+
+.div_nome_fornecedor {
+	width: 42.75%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_descricao {
+	width: 90%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_quantidade_valor {
+	width: 42.5%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}

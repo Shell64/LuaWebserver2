@@ -1,0 +1,1 @@
+[{"nome_completo":"funcionario","id":1,"cpf":"21313232132","email":"sadasdsa@asdadas.com","senha":"merda","endereco":"saddasdasdasadsdas","cidade":"saddasasdads","cep":"23121312","rg":"321131221331232","telefone":"221213231213132","bairro":"asdadsadsads","cargo":"pedreiro","uf":"SP","usuario":"user"}]

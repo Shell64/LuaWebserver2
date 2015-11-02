@@ -1,0 +1,349 @@
+@font-face {
+    font-family: 'Font1';
+    src: url('../fonts/Exo2/Exo2-Regular.ttf') format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Font1-Thin';
+    src: url('../fonts/Exo2/Exo2-Thin.ttf') format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Label */
+label {
+	color: #222;
+	font-family: 'Font1';
+	font-size: 13px;
+	text-decoration: none;
+}
+
+/* Imagens */
+img{
+    position: absolute;
+    margin: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* img */
+img {
+	cursor: pointer;
+}
+
+/* Tabela */
+table {
+	/*border-collapse: collapse;*/
+	border-radius: 4px;
+	margin-right: 32px;
+	font-size: 12px;
+	background: #FFF;
+	border: 1px solid #AAA;
+	vertical-align: top;
+	color: #000;
+	font-family: "Font1";
+	position:relative; 
+}
+
+tr {
+	margin-right: 2px;
+	font-size: 12px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #FFF;
+	height: 24px;
+	vertical-align: top;
+	color: #666;
+	font-family: "Font1";
+	position:relative; 
+}
+
+td {
+	margin-right: 2px;
+	font-size: 12px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #FFF;
+	height: 24px;
+	vertical-align: top;
+	color: #666;
+	font-family: "Font1";
+	position:relative; 
+}
+
+.tbl_par {
+	margin-right: 2px;
+	font-size: 12px;
+	padding: 3px;
+	background: #DDD;
+	border: 1px solid #FFF;
+	height: 24px;
+	vertical-align: top;
+	color: #000;
+	font-family: "Font1";
+	position:relative; 
+}
+
+.tbl_impar {
+	margin-right: 2px;
+	font-size: 12px;
+	padding: 3px;
+	background: #EEE;
+	border: 1px solid #FFF;
+	height: 24px;
+	vertical-align: top;
+	color: #000;
+	font-family: "Font1";
+	position:relative; 
+}
+
+.tbl_titulo {
+	margin-right: 2px;
+	font-size: 12px;
+	padding: 3px;
+	background: #000;
+	border: 1px solid #888;
+	height: 24px;
+	vertical-align: top;
+	color: #FFF;
+	font-family: "Font1";
+	position:relative; 
+}
+
+.lbl_titulo {
+	color: #CCC;
+}
+
+.div_tbl {
+	margin-left: auto;
+
+    margin-right: auto;
+
+    width: 90%;
+}
+
+/* Botao comum*/
+input[type="button"] {
+	margin-right: 2px;
+	font-size: 18px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 32px;
+	vertical-align: top;
+	color: #666;
+	font-family: "Font1";
+}
+
+input[type="button"]:hover {
+	background: #F5F5F5;
+	color: #111;
+	box-shadow: 0px 0px 20px #3399FF;
+}
+
+input[type="button"]:focus {
+	border: none;
+	background-color: #0066FF;
+	color: #FFF;
+	box-shadow: 0px 0px 5px #3399FF;
+}
+
+/* Botao submit */
+input[type="submit"] {
+	margin-right: 2px;
+	font-size: 18px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 32px;
+	vertical-align: top;
+	color: #666;
+	font-family: "Font1";
+}
+
+input[type="submit"]:hover {
+	background: #F5F5F5;
+	color: #111;
+	box-shadow: 0px 0px 10px #3399FF;
+}
+
+/* ComboBox */
+select {
+	margin-right: 2px;
+	font-size: 13px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 24px;
+	vertical-align: top;
+	color: #444;
+	font-family: "Font1";
+	text-transform: uppercase;
+}
+
+select:focus {
+	box-shadow: 0px 0px 6px #3399FF;
+}
+
+/* Caixa de texto */
+input[type="text"] {
+	margin-right: 2px;
+	font-size: 13px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 24px;
+	vertical-align: top;
+	color: #444;
+	font-family: "Font1";
+	text-transform: uppercase;
+}
+
+input[type="text"]:focus {
+	box-shadow: 0px 0px 6px #3399FF;
+}
+
+/* Caixa de email */
+input[type="email"] {
+	margin-right: 2px;
+	font-size: 13px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 24px;
+	vertical-align: top;
+	color: #666;
+	font-family: "Font1";
+}
+
+input[type="email"]:focus {
+	box-shadow: 0px 0px 6px #3399FF;
+}
+
+/* Caixa de senhas */
+input[type="password"] {
+	margin-right: 2px;
+	font-size: 13px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 24px;
+	vertical-align: top;
+	color: #666;
+	font-family: "Font1";
+}
+
+input[type="password"]:focus {
+	box-shadow: 0px 0px 6px #3399FF;
+}
+
+/* Caixa de numeros */
+input[type="number"] {
+	margin-right: 2px;
+	font-size: 13px;
+	padding: 3px;
+	background: #F5F5F5;
+	border: 1px solid #888;
+	border-radius:2px;
+	height: 24px;
+	vertical-align: top;
+	color: #444;
+	font-family: "Font1";
+	text-transform: uppercase;
+}
+
+input[type="number"]:focus {
+	box-shadow: 0px 0px 6px #3399FF;
+}
+
+/* Placeholders */
+::-webkit-input-placeholder {
+	text-transform: none;
+}
+
+:-moz-placeholder { /* Firefox 18- */
+	text-transform: none;
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+	text-transform: none;
+}
+
+:-ms-input-placeholder {  
+	text-transform: none;
+}
+
+
+/* Cabeçario 1 */
+h1 {
+	padding-left: 3%;
+	padding-top: 20px;
+	color: #000;
+	font-family: 'Font1-Thin';
+	font-size: 20px;
+	text-decoration: none;
+	cursor: default;
+}
+
+/* Cabeçario 2 */
+h2 {
+	padding-top: 1%;
+	padding-left: 4%;
+	color: #000;
+	font-family: 'Font1-Thin';
+	font-size: 16px;
+	text-decoration: none;
+	cursor: default;
+}
+
+/* Cabeçario */
+header {
+	margin: 0 -500%;
+	padding: 0em 500%;
+	background: #333333; 
+	border: none;
+}
+
+/* Corpo (background) */
+body {
+	background: #FFF;
+}
+
+.conteudo {
+	margin: 0 -500%;
+	padding: 0em 500%;
+	background: #333333;
+	border: none;
+}
+
+/* divs de cada caixa de texto nos formularios */
+.entradas {
+	width: 25%;
+	height: 32%;
+	padding-left: 6%;
+	float: left;
+}
+
+/* div que incorpora todos os outros divs nos cadastros */
+.separador {
+	width: 100%;
+	height: 128px;
+	float: left;
+}
+
+a {
+	color: #555;
+	font-family: 'Font1';
+	font-size: 14px;
+	text-decoration: none;
+}

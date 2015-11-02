@@ -1,0 +1,105 @@
+﻿<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="../resources/css/formularios.css">
+		<link rel="stylesheet" type="text/css" href="../resources/css/fornecedor.css">
+		<script src="../resources/js/jquery-1.11.1.min.js"></script>
+        <script src="../resources/js/Fornecedor.js"></script>
+        <script> PreencherFormulario(); </script>
+	</head>
+			
+	<body>
+		<form id="form1" action="javascript:void(0);">
+			<div class="formulario">
+				<h1>Cadastrar Fornecedor</h1>
+				<hr class="hr_cabecario"/>
+				<div class="div_identificacao">
+					<h2>Identificação</h2>
+					<div class="div_nome_fantasia_razao_social">
+						<label>* Nome Fantasia</label>
+						<input type="text" pattern="[A-Za-z\s]+$" placeholder="Digite o nome fantasia" maxlength=80 id="nome_fantasia" title="Nome fantasia" value="" style="width: 100%;" autofocus required/>
+					</div>
+					<div class="div_nome_fantasia_razao_social">
+						<label>* Razão Social</label>
+						<input type="text" pattern="[A-Za-z\s]+$" placeholder="Digite a razão social" maxlength=80 id="razao_social" title="Razão social" value="" style="width: 100%;" required/>
+					</div>
+					<div class="div_cnpj">
+						<label>* CNPJ</label>
+						<input type="text" pattern="[0-9]{14}" placeholder="Ex. 11222333444455" maxlength=14 id="cnpj" title="CNPJ sem pontuação" value="" style="width: 100%;" required/>
+					</div>
+				</div>
+				<hr/>
+				
+				<div class="div_localizacao">
+					<h2>Localização</h2>
+					<div class="div_endereco">
+						<label>* Endereço</label>
+						<input type="text" pattern="[A-Za-z\s]+$" placeholder="Digite o endereço" maxlength=80 id="endereco" title="Endereço" value="" style="width: 100%;" required/>
+					</div>
+					<div class="div_bairro_cidade">
+						<label>* Bairro</label>
+						<input type="text" pattern="[A-Za-z\s]+$" placeholder="Digite o nome do bairro" maxlength=30 id="bairro" title="Bairro" value="" style="width: 100%;" required/>
+					</div>
+					<div class="div_bairro_cidade">
+						<label>* Cidade</label>
+						<input type="text" pattern="[A-Za-z\s]+$" placeholder="Digite o nome da cidade" maxlength=50 id="cidade" title="Cidade" value="" style="width: 100%;" required/>
+					</div>
+					<div class="div_uf">
+						<label>* UF</label>
+						<select id="uf" title="Unidade da Federação">
+							<option value="AC" title="Volvo">AC</option>
+							<option value="AL" title="Volvo">AL</option>
+							<option value="AP" title="Volvo">AP</option>
+							<option value="AM" title="Volvo">AM</option>
+							<option value="BA" title="Volvo">BA</option>
+							<option value="CE" title="Volvo">CE</option>
+							<option value="DF" title="Volvo">DF</option>
+							<option value="ES" title="Volvo">ES</option>
+							<option value="GO" title="Volvo">GO</option>
+							<option value="MA" title="Volvo">MA</option>
+							<option value="MT" title="Volvo">MT</option>
+							<option value="MS" title="Volvo">MS</option>
+							<option value="MG" title="Volvo">MG</option>
+							<option value="PA" title="Volvo">PA</option>
+							<option value="PB" title="Volvo">PB</option>
+							<option value="PR" title="Volvo">PR</option>
+							<option value="PE" title="Volvo">PE</option>
+							<option value="PI" title="Volvo">PI</option>
+							<option value="RJ" title="Volvo">RJ</option>
+							<option value="RN" title="Volvo">RN</option>
+							<option value="RS" title="Volvo">RS</option>
+							<option value="RO" title="Volvo">RO</option>
+							<option value="RR" title="Volvo">RR</option>
+							<option value="SC" title="Volvo">SC</option>
+							<option value="SP" title="Volvo">SP</option>
+							<option value="SE" title="Volvo">SE</option>
+							<option value="TO" title="Volvo">TO</option>
+						</select>
+					</div>
+					<div class="div_cep">
+						<label>* CEP</label>
+						<input type="text" pattern="[0-9]{8}" placeholder="Ex. 12345000" maxlength=8 id="cep" title="CEP  sem pontuação" value="" style="width: 100%;" required/>
+					</div>
+				</div>
+				<hr/>
+				
+				<div class="div_contato">
+					<h2>Contato</h2>
+					<div class="div_telefone">
+						<label>* Telefone</label>
+						<input type="text" maxlength=15 pattern="[0-9\s]+$" placeholder="Ex. 552233334444" id="telefone" title="Telefone sem pontuação" value="" style="width: 100%;" required/>
+					</div>
+					<div class="div_email">
+						<label>E-Mail</label>
+						<input type="email" maxlength=35  placeholder="Ex. nome@dominio.com" id="email" title="E-Mail" value="" style="width: 100%;"/>
+					</div>
+				</div>
+				<hr/>
+				
+				<div class="div_final">
+					<p><a class="informativo" title="Observação: Os campos marcados com * são obrigatórios." >Obs: Os campos marcados com * são obrigatórios. </a>
+					<p><input class="btn_submit" type="submit" id="cadastrar" title="Cadastrar" value="Cadastrar" onclick="Cadastrar(this)"/></p>
+				</div
+		</form>
+	</body>
+</html>

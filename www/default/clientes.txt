@@ -1,0 +1,1 @@
+[{"nome_completo":"felipe","id":1,"email":"sdasdasad@asdsaasd.cm","bairro":"asdasdas","cidade":"assasda","telefone":"12321321132","cep":"31212321","endereco":"asddasadad","uf":"SP","cpf":"21321213212"}]

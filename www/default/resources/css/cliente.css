@@ -1,0 +1,100 @@
+hr {
+	margin-left: 4.65%;
+	width: 91%;
+	border-style: inset;
+	border-width: 1px;
+	border-color: #EEE;
+}
+
+.hr_cabecario {
+	margin-left: 0%;
+	width: 100%;
+	border-color: #CCC;
+}
+
+.div_identificacao {
+	width: 100%;
+	height: 96px;
+}
+
+.div_localizacao {
+	width: 100%;
+	height: 145px;
+}
+
+.div_contato {
+	width: 100%;
+	height: 96px;
+}
+
+.div_final {
+	width: 100%;
+	height: 96px;
+}
+
+p {
+	text-align: center;
+}
+
+/* a informativo */
+.informativo {
+	font-family: 'Font1';
+	font-size: 14px;
+	color: #777;
+}
+
+.div_nome {
+	width: 65%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_cpf {
+	width: 20%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_endereco {
+	width: 90%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_bairro_cidade {
+	width: 30%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_uf {
+	width: 4%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_cep {
+	width: 10%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_telefone {
+	width: 20%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}
+
+.div_email {
+	width: 65%;
+	height: 48px;
+	padding-left: 5%;
+	float: left;
+}

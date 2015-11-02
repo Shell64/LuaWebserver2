@@ -1,0 +1,1 @@
+[{"valor":"25.25","qtd_estoque":"3","id":1,"id_fornecedor":"2","nome":"teste","descricao":"descricao"}]
