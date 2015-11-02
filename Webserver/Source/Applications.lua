@@ -15,7 +15,10 @@ Applications.Blacklist = {}
 -------------------------------------
 --Methods for Application class.
 -------------------------------------
+
 Application.Blacklist = {}
+
+Application.Runtime = FileSystem2.Read(Webserver.WWW .. "API_Runtime.lua")
 
 function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
 	local Data = FileSystem2.Read(Path)
@@ -28,6 +31,7 @@ function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
 		PageData = HTTP.ResponseCodes[Code]
 		
 	else
+			
 		--Compiles the string
 		local Application = Application.New()
 		
@@ -35,12 +39,19 @@ function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
 		local CompiledCode, Err
 		
 		ProtectedCall(function()
-			CompiledCode, Err = LoadString("return function(Application) \n" .. Data .. "\n return Application end", Path)
+			CompiledCode, Err = LoadString("return function(Application) \n" .. Application.Runtime .. "\n" .. Data .. "\n return Application end", Path)
 		end)
 		
+		local Environment
 		if CompiledCode then
+			--Generate the environment for our API
+			Environment = Applications.GenerateEnvironment(HostPath, Host)
+			
+			
+			SetEnvironmentFunction(CompiledCode, Environment)
 			local RunFunction = CompiledCode()
 			
+			SetEnvironmentFunction(RunFunction, Environment)
 			RunFunction(Application)
 		else
 			Code = 500 --Internal Server Error
@@ -48,13 +59,10 @@ function Applications.RunLuaFile(Path, HostPath, Method, Host, Information)
 		end
 		
 		if Code == 200 then
-			--Generate the environment for our API
-			local Environment = Applications.GenerateEnvironment(HostPath, Host)
-			
-			SetEnvironmentFunction(Application.POST, Environment)
+			SetEnvironmentFunction(Application[Method], Environment)
 			
 			local Ok, Err = ProtectedCall(function()
-				PageData, Code = Application.POST(Information)
+				PageData, Code = Application[Method](Information)
 				Code = Code or 200
 			end)
 			
@@ -83,7 +91,7 @@ Applications.ReloadEnvironmentBlacklist()
 function Applications.GenerateEnvironment(HostPath, Host)
 	--These are the variables/functions that will be accessible by the programmer on a .lua page
 	
-	local Environment = Table.Clone(InitialEnvironment)
+	local Environment = Table.Clone(InitialEnvironment, {__index = Environment})
 	
 	if Application.Blacklist.Global then
 		if Application.Blacklist[Host] then
