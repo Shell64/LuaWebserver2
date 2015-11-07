@@ -18,7 +18,7 @@ Webserver.MaximumWaitingConnections = 500
 
 Webserver.KeepAlive = false
 
-Webserver.SplitPacketSize = 1024 * 4 --bytes
+Webserver.SplitPacketSize = 128 --bytes
 
 Webserver.Timeout = 5 --seconds, 0 disables it
 
@@ -28,9 +28,9 @@ Webserver.Index = {"index.html", "index.htm", "index.lua"}
 --Cache
 -------------------------------------
 
-Webserver.CacheFileMaximumSize = 1024 * 1024 * 8 --bytes
+Webserver.CacheFileMaximumSize = 1024 * 1024 * 1024 --bytes
 
-Webserver.CacheMaximumSize = 1024 * 1024 * 512 --bytes
+Webserver.CacheMaximumSize = 1024 * 1024 * 1024 --bytes
 
 -------------------------------------
 --WWW, it's important to let the slash / in the end of path.
