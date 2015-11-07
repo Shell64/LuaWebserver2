@@ -238,37 +238,32 @@ function Webserver.Update(...)
 			if ClientConnection.SendQueue[1] then
 				local Queue = ClientConnection.SendQueue[1]
 				
+				if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData then
+					if Type(Queue.Data) == "string" then
+						Queue.BlockData = Queue.Data:Substring(Queue.BlockIndex * Webserver.SplitPacketSize + 1, Math.Minimum(Queue.BlockIndex * Webserver.SplitPacketSize + Webserver.SplitPacketSize, Queue.DataSize))
+						Queue.BlockIndex = Queue.BlockIndex + 1
+					else
+						Queue.BlockData = Queue.Data:read(Webserver.SplitPacketSize)
+						Queue.BlockIndex = Queue.BlockIndex + 1
+					end
+					
+					ClientConnection.SendQueue[1].SentBytes = 0
+				end
 				
-				repeat
-    				if Queue.BlockData then
-    				    
-    					local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.SendQueue[1].SentBytes, #Queue.BlockData))
-    					--print("Connection " .. ClientConnection.ID .. " Sent (" .. ToString(SentBytes) .. "/" .. #Queue.BlockData .. ")")
-    					if SentBytes then
-    						ClientConnection.SendQueue[1].SentBytes = ClientConnection.SendQueue[1].SentBytes + SentBytes
-    						ClientConnection.SendQueue[1].TotalSentBytes = ClientConnection.SendQueue[1].TotalSentBytes + SentBytes
-    					elseif SentBytes == 0 then
-    						--if it is not sending any bytes, then the client is timing out
-    					else
-    						local IP, Port = ClientConnection.ClientTCP:getpeername()
-    						ClientConnection.ClientTCP:close()
-            				Log(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), Err))
-            				ClientConnection:Destroy()
-    					end
-			        end
-			    
-			        if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData then
-    					if Type(Queue.Data) == "string" then
-    						Queue.BlockData = Queue.Data:Substring(Queue.BlockIndex * Webserver.SplitPacketSize + 1, Math.Minimum(Queue.BlockIndex * Webserver.SplitPacketSize + Webserver.SplitPacketSize, Queue.DataSize))
-    						Queue.BlockIndex = Queue.BlockIndex + 1
-    					else
-    						Queue.BlockData = Queue.Data:read(Webserver.SplitPacketSize)
-    						Queue.BlockIndex = Queue.BlockIndex + 1
-    					end
-    					
-    					ClientConnection.SendQueue[1].SentBytes = 0
-    				end
-			    until (not (Queue.BlockData and SentBytes == Webserver.SplitPacketSize))
+				local Receive, Send = socket.select({}, {ClientConnection.ClientTCP}, 0)
+				
+				if Queue.BlockData and #Send > 0 then
+					local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.SendQueue[1].SentBytes, #Queue.BlockData))
+					
+					if SentBytes then
+						ClientConnection.SendQueue[1].SentBytes = ClientConnection.SendQueue[1].SentBytes + SentBytes
+						ClientConnection.SendQueue[1].TotalSentBytes = ClientConnection.SendQueue[1].TotalSentBytes + SentBytes
+					elseif SentBytes == 0 then
+						--if it is not sending any bytes, then the client is timing out
+					else
+						--nil, the client timed out or something else happened.
+					end
+				end
 				
 				if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
 					--sometimes the data we are sending from queue is not a string, it might be streaming from a file, so we need to close it.
