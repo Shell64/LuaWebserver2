@@ -1,6 +1,6 @@
 If you are on ubuntu (the only OS I did test), just run the following commands:
 
-sudo apt-get install lua-filesystem lua-socket
+sudo apt-get install lua-filesystem
 
 and then you can run the webserver just as:
 
