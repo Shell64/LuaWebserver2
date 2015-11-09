@@ -203,7 +203,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 				Start = ToNumber(Range:Substring(1, Separator - 1)) or 0
 				End = ToNumber(Range:Substring(Separator + 1, #Range)) or Attributes.size - 1
 				
-				GenerateHeaderAttributes["Content-Length"] = End - Start
+				GenerateHeaderAttributes["Content-Length"] = End - Start + 1
 				GenerateHeaderAttributes["Content-Range"] = "bytes " .. ToString(Start) .. "-" .. ToString(End) .. "/" .. Attributes.size
 			end
 			
@@ -228,6 +228,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 				Queue.Data = FileSystem2.Read(Found)
 			end
 			Queue.DataSize = #Queue.Data
+			print("Real length: " .. Queue.DataSize)
 			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
 	end
