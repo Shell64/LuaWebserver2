@@ -2,10 +2,10 @@
 
 ReceiveQueueObject.GetSet("Header", "string")
 
-SendQueueObject.GetSet("TotalReceivedBytes", "number")
-SendQueueObject.GetSet("ReceivedBytes", "number")
-SendQueueObject.GetSet("Data", "string")
-SendQueueObject.GetSet("DataSize", "number")
+ReceiveQueueObject.GetSet("TotalReceivedBytes", "number")
+ReceiveQueueObject.GetSet("ReceivedBytes", "number")
+ReceiveQueueObject.GetSet("Data", "string")
+ReceiveQueueObject.GetSet("DataSize", "number")
 
 ReceiveQueueObject.GetSet("HeaderInformation", "table")
 
