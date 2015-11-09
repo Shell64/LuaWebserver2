@@ -6,7 +6,7 @@
 --Language
 -------------------------------------
 
-Webserver.Language = "pt"
+Webserver.Language = "en"
 
 -------------------------------------
 --Connection
