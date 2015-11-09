@@ -90,7 +90,7 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 	--If file was not found, send 404 and not found page or POST path is invalid
 	if not Found or HeaderInformation.MethodData:Find("..", nil, true) then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
-		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), "POST", ToString(Found or HeaderInformation.MethodData)))
 	
 		Queue.Data = HTTP.GenerateHeader(404, {
 			["Connection"] = "close",
@@ -106,7 +106,7 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 	else
 	
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
-		Log(String.Format(Language[Webserver.Language][4], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found)))
+		Log(String.Format(Language[Webserver.Language][4], ClientConnection:GetID(), ToString(IP), ToString(Port), "POST", ToString(Found)))
 		
 		local FileExtension = Utilities.GetExtension(ToString(Found)):Lower()
 		
@@ -164,7 +164,7 @@ local function POST(ClientConnection, HeaderInformation, HeaderContent)
 		--Else, its a file like any other, just send the data that it contains.
 		else
 			local IP, Port = ClientConnection.ClientTCP:getpeername()
-			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+			Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), "POST", ToString(Found or HeaderInformation.MethodData)))
 		
 			Queue.Data = HTTP.GenerateHeader(404, {
 				["Connection"] = "close",

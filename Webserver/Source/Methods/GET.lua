@@ -90,7 +90,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 	--If file was not found, send 404 and not found page or GET path is invalid
 	if not Found or HeaderInformation.MethodData:Find("..", nil, true) then
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
-		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found or HeaderInformation.MethodData)))
+		Log(String.Format(Language[Webserver.Language][3], ClientConnection:GetID(), ToString(IP), ToString(Port), "GET", ToString(Found or HeaderInformation.MethodData)))
 	
 		Queue.Data = HTTP.GenerateHeader(404, {
 			["Last-Modified"] = Utilities.InitTime,
@@ -109,7 +109,7 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 	else
 	
 		local IP, Port = ClientConnection.ClientTCP:getpeername()
-		Log(String.Format(Language[Webserver.Language][4], ClientConnection:GetID(), ToString(IP), ToString(Port), ToString(Found)))
+		Log(String.Format(Language[Webserver.Language][4], ClientConnection:GetID(), ToString(IP), ToString(Port), "GET", ToString(Found)))
 		
 		local FileExtension = Utilities.GetExtension(ToString(Found)):Lower()
 		
@@ -167,14 +167,53 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			local Attributes = FileSystem2.Attributes(Found)
 			
 			--Generate the HTTP header and add it to queue for sending.
-			Queue.Data = 
-			HTTP.GenerateHeader(200, {
+			local GenerateHeaderAttributes = {
 				["Last-Modified"] = Utilities.GetDate(Attributes.modification),
 				["Accept-Ranges"] = "none",
 				["Content-Length"] = Attributes.size,
 				["Content-Type"] = Extension,
+				["Accept-Ranges"] = "bytes",
 				["ETag"] = SHA1(Found .. Utilities.GetDate(Attributes.modification)),
-			})
+			}
+			
+			--If it's being requested a part of file (Partial Content) then parse it
+			local Range = HeaderInformation.Range or HeaderInformation["Content-Range"]
+			local Start, End
+			if Range then
+				local SeparatorStart = 0
+				
+				for I = 1, #Range do
+					if ToNumber(Range:Substring(I, I)) then
+						SeparatorStart = I
+						break
+					end
+				end
+				
+				Range = Range:Substring(SeparatorStart)
+				
+				local Separator = 0
+				
+				for I = 1, #Range do
+					if Range:Substring(I, I) == "-" then
+						Separator = I
+						break
+					end
+				end
+				
+				Start = ToNumber(Range:Substring(1, Separator - 1)) or 0
+				End = ToNumber(Range:Substring(Separator + 1, #Range)) or Attributes.size - 1
+				
+				GenerateHeaderAttributes["Content-Length"] = End - Start
+				GenerateHeaderAttributes["Content-Range"] = "bytes " .. ToString(Start) .. "-" .. ToString(End) .. "/" .. Attributes.size
+			end
+			
+			
+			if Range then
+				Queue.Data = HTTP.GenerateHeader(206, GenerateHeaderAttributes)
+			else
+				Queue.Data = HTTP.GenerateHeader(200, GenerateHeaderAttributes)
+			end
+			
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 			
@@ -182,7 +221,12 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			local Queue = SendQueueObject.New()
 		--	Queue.Data = FileSystem2.NewFile(Found)
 		--	Queue.DataSize = Attributes.size
-			Queue.Data = FileSystem2.Read(Found)
+		
+			if Range then
+				Queue.Data = FileSystem2.Read(Found):Substring(Start + 1, End + 1)
+			else
+				Queue.Data = FileSystem2.Read(Found)
+			end
 			Queue.DataSize = #Queue.Data
 			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
