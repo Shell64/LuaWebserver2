@@ -46,6 +46,7 @@ local MIME = {
 	exe = "application/octet-stream",
 	fif = "application/fractals",
 	flr = "x-world/x-vrml",
+	flv = "flv-application/octet-stream",
 	gif = "image/gif",
 	gtar = "application/x-gtar",
 	gz = "application/x-gzip",
