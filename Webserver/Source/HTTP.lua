@@ -76,6 +76,53 @@ function HTTP.GenerateHeader(Code, Headers)
 	return Header
 end
 
+--Convert URI escapes such %20, etc.
+function HTTP.ProcessUnicodeEscapes(Parameter)
+	local StartEscape = 1
+	local LastEscape = 1
+	local FoundEscape = false
+	local NewParameter = ""
+	local Count = 0
+	
+	--ProtectedCall(function()
+		for I = 1, #Parameter do
+			if not FoundEscape then
+				if Parameter:Substring(I, I) == "%" then
+					StartEscape = I
+					FoundEscape = true
+					
+					NewParameter = NewParameter .. Parameter:Substring(LastEscape, StartEscape - 1)
+				end
+			else
+				if not ToNumber(Parameter:Substring(I, I)) or I == #Parameter or Count == 2 then
+					Count = 0
+					local Number = ToNumber("0x" .. Parameter:Substring(StartEscape + 1, I - 1))
+					
+					if Number then
+						NewParameter = NewParameter .. String.Char(Number)
+					end
+					
+					
+					LastEscape = I
+					FoundEscape = false
+				else
+					Count = Count + 1
+				end
+			end
+		end
+	--end)
+	
+	NewParameter = NewParameter .. Parameter:Substring(LastEscape, #Parameter)
+	
+	if NewParameter ~= "" then
+		Parameter = NewParameter
+	end
+	
+	Parameter = Parameter:GSubstring("%+", " ")
+	
+	return Parameter
+end
+
 function HTTP.ParseHeader(HTTP_Header)
 	local HeaderInformation = {}
 
@@ -127,43 +174,13 @@ function HTTP.ParseHeader(HTTP_Header)
 
 	--Separe the path from URI parameters.
 	for I = 1, #HeaderInformation.MethodData do
+		HeaderInformation.MethodData = HTTP.ProcessUnicodeEscapes(HeaderInformation.MethodData)
+		
+		--End of URI escapes code.
+		
+		--Separe ? parameters
 		if HeaderInformation.MethodData:Substring(I, I) == "?" then
 			local Parameter = HeaderInformation.MethodData:Substring(I + 1, #HeaderInformation.MethodData)
-			
-			--Convert URI escapes such %20, etc.
-			local StartEscape = 1
-			local LastEscape = 1
-			local FoundEscape = false
-			local NewParameter = ""
-			for I = 1, #Parameter do
-				if not FoundEscape then
-					if Parameter:Substring(I, I) == "%" then
-						StartEscape = I
-						FoundEscape = true
-						
-						NewParameter = NewParameter .. Parameter:Substring(LastEscape, StartEscape - 1)
-					end
-				else
-					if not ToNumber(Parameter:Substring(I, I)) or I == #Parameter then
-						local Number = ToNumber("0x" .. Parameter:Substring(StartEscape + 1, I - 1))
-						
-						if Number then
-							NewParameter = NewParameter .. String.Char(Number)
-						end
-						
-						
-						LastEscape = I
-						FoundEscape = false
-					end
-				end
-			end
-			
-			NewParameter = NewParameter .. Parameter:Substring(LastEscape, #Parameter)
-			
-			if NewParameter ~= "" then
-				Parameter = NewParameter
-			end
-			--End of URI escapes code.
 			
 			HeaderInformation.MethodData = HeaderInformation.MethodData:Substring(1, I -1)
 			HeaderInformation.Parameter = Parameter
