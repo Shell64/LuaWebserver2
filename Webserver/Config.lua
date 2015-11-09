@@ -6,7 +6,7 @@
 --Language
 -------------------------------------
 
-Webserver.Language = "en"
+Webserver.Language = "pt"
 
 -------------------------------------
 --Connection
@@ -18,7 +18,7 @@ Webserver.MaximumWaitingConnections = 500
 
 Webserver.KeepAlive = false
 
-Webserver.SplitPacketSize = 1024 * 24 --bytes
+Webserver.SplitPacketSize = 256 --bytes
 
 Webserver.Timeout = 5 --seconds, 0 disables it
 
