@@ -1,6 +1,4 @@
-﻿#!/bin/luajit
-
-package.path = package.path .. ";./?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua;/usr/local/lib/lua/5.1/?.lua;/usr/local/lib/lua/5.1/?/init.lua;/usr/share/lua/5.1/?.lua;/usr/share/lua/5.1/?/init.lua"
+﻿package.path = package.path .. ";./?.lua;/usr/local/share/lua/5.1/?.lua;/usr/local/share/lua/5.1/?/init.lua;/usr/local/lib/lua/5.1/?.lua;/usr/local/lib/lua/5.1/?/init.lua;/usr/share/lua/5.1/?.lua;/usr/share/lua/5.1/?/init.lua"
 package.cpath = package.cpath .. ";./?.so;/usr/local/lib/lua/5.1/?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;/usr/lib/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so"
 
 local Require = require
@@ -112,6 +110,7 @@ Webserver.ServerTCP = ServerTCP
 Webserver.Connections = {}
 
 function Webserver.Update(...)
+	collectgarbage("collect")
 	
 	-------------------------------------
 	--Receive incoming client connections and put in a Connection object.
@@ -174,11 +173,23 @@ function Webserver.Update(...)
 						end
 						
 						if ClientConnection.ContentLength == 0 then
-							if HeaderInformation.Method == "GET" then
-								GET(ClientConnection, HeaderInformation)
+							if ClientConnection.ReceivedHeader.Method == "GET" then
+								GET(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
 							
-							elseif HeaderInformation.Method == "POST" then
-								POST(ClientConnection, HeaderInformation, ClientConnection.ReceivedData)
+							elseif ClientConnection.ReceivedHeader.Method == "POST" then
+								POST(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "PUT" then
+								PUT(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "DELETE" then
+								DELETE(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+							
+							elseif ClientConnection.ReceivedHeader.Method == "HEAD" then
+								HEAD(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
+								
+							elseif ClientConnection.ReceivedHeader.Method == "OPTIONS" then
+								OPTIONS(ClientConnection, ClientConnection.ReceivedHeader, ClientConnection.ReceivedData)
 							end
 						end
 						
@@ -238,41 +249,53 @@ function Webserver.Update(...)
 			if ClientConnection.SendQueue[1] then
 				local Queue = ClientConnection.SendQueue[1]
 				
-				if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData then
-					if Type(Queue.Data) == "string" then
-						Queue.BlockData = Queue.Data:Substring(Queue.BlockIndex * Webserver.SplitPacketSize + 1, Math.Minimum(Queue.BlockIndex * Webserver.SplitPacketSize + Webserver.SplitPacketSize, Queue.DataSize))
-						Queue.BlockIndex = Queue.BlockIndex + 1
-					else
-						Queue.BlockData = Queue.Data:read(Webserver.SplitPacketSize)
-						Queue.BlockIndex = Queue.BlockIndex + 1
-					end
-					
-					ClientConnection.SendQueue[1].SentBytes = 0
-				end
-				
 				local Receive, Send = socket.select({}, {ClientConnection.ClientTCP}, 0)
 				
-				if Queue.BlockData and #Send > 0 then
-					local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.SendQueue[1].SentBytes, #Queue.BlockData))
-					
-					if SentBytes then
-						ClientConnection.SendQueue[1].SentBytes = ClientConnection.SendQueue[1].SentBytes + SentBytes
-						ClientConnection.SendQueue[1].TotalSentBytes = ClientConnection.SendQueue[1].TotalSentBytes + SentBytes
-					elseif SentBytes == 0 then
-						--if it is not sending any bytes, then the client is timing out
-					else
-						--nil, the client timed out or something else happened.
-					end
-				end
+				while ClientConnection.SendQueue[1] and Queue == ClientConnection.SendQueue[1] and #Send > 0 do
 				
-				if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
-					--sometimes the data we are sending from queue is not a string, it might be streaming from a file, so we need to close it.
-					if Type(ClientConnection.SendQueue[1].Data) ~= "string" then
-						ClientConnection.SendQueue[1].Data:close()
+					if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData then
+						if Type(Queue.Data) == "string" then
+							Queue.BlockData = Queue.Data:Substring(Queue.BlockIndex * Webserver.SplitPacketSize + 1, Math.Minimum(Queue.BlockIndex * Webserver.SplitPacketSize + Webserver.SplitPacketSize, Queue.DataSize))
+							Queue.BlockIndex = Queue.BlockIndex + 1
+						else
+							Queue.BlockData = Queue.Data:read(Webserver.SplitPacketSize)
+							Queue.BlockIndex = Queue.BlockIndex + 1
+						end
+						
+						ClientConnection.SendQueue[1].SentBytes = 0
+					end
+
+					if Queue.BlockData and #Send > 0 then
+						local SentBytes, Err = ClientConnection.ClientTCP:send(Queue.BlockData:Substring(ClientConnection.SendQueue[1].SentBytes, #Queue.BlockData))
+						
+						if Err == "closed" then
+							local IP, Port = ClientConnection.ClientTCP:getpeername()
+							Log(String.Format(Language[Webserver.Language][2], ClientConnection:GetID(), ToString(IP), ToString(Port), Err))
+							ClientConnection:Destroy()
+							break
+						end
+						
+						if SentBytes then
+							ClientConnection.SendQueue[1].SentBytes = ClientConnection.SendQueue[1].SentBytes + SentBytes
+							ClientConnection.SendQueue[1].TotalSentBytes = ClientConnection.SendQueue[1].TotalSentBytes + SentBytes
+						elseif SentBytes == 0 then
+							--if it is not sending any bytes, then the client is timing out
+						else
+							--nil, the client timed out or something else happened.
+						end
 					end
 					
-					--We did finish that item from queue.
-					Table.Remove(ClientConnection.SendQueue, 1)
+					if not Queue.BlockData or ClientConnection.SendQueue[1].SentBytes == #Queue.BlockData and Queue.BlockIndex >= Math.Ceil(Queue.DataSize / Webserver.SplitPacketSize) then
+						--sometimes the data we are sending from queue is not a string, it might be streaming from a file, so we need to close it.
+						if Type(ClientConnection.SendQueue[1].Data) ~= "string" then
+							ClientConnection.SendQueue[1].Data:close()
+						end
+						
+						--We did finish that item from queue.
+						Table.Remove(ClientConnection.SendQueue, 1)
+					end
+					
+					Receive, Send = socket.select({}, {ClientConnection.ClientTCP}, 0)
 				end
 			end
 		end
