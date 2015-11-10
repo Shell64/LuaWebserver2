@@ -25,7 +25,7 @@ function Cadastrar(btn_submit) {
 
     $.ajax({
         type: 'POST',
-        url: 'Fornecedor.lua?Cadastrar',
+        url: 'fornecedor.lua?Cadastrar',
         data: "{\"objeto\" : " + JSON.stringify(objeto) + "}",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
@@ -66,7 +66,7 @@ function Alterar(btn_submit) {
 
     $.ajax({
         type: 'POST',
-        url: 'Fornecedor.lua?Alterar',
+        url: 'fornecedor.lua?Alterar',
         data: "{\"objeto\" : " + JSON.stringify(objeto) + "}",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
@@ -87,7 +87,7 @@ function Alterar(btn_submit) {
 function Excluir(elem) {
     $.ajax({
         type: 'POST',
-        url: 'Fornecedor.lua?Excluir',
+        url: 'fornecedor.lua?Excluir',
         data: "{ \"id\" : " + elem.getAttribute('data-id') + "}",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
@@ -110,7 +110,7 @@ function PreencherFormulario() {
 
     $.ajax({
         type: 'POST',
-        url: 'Fornecedor.lua?Consultar',
+        url: 'fornecedor.lua?Consultar',
         data: "{\"id\" : " + vars.id + "}",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
@@ -143,7 +143,7 @@ function PreencherFormulario() {
 function PreencherTabela() {
     $.ajax({
         type: 'POST',
-        url: 'Fornecedor.lua?ConsultarTodos',
+        url: 'fornecedor.lua?ConsultarTodos',
         data: "{}",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
