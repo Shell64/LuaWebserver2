@@ -227,8 +227,8 @@ local function GET(ClientConnection, HeaderInformation, HeaderContent)
 			else
 				Queue.Data = FileSystem2.Read(Found)
 			end
+			
 			Queue.DataSize = #Queue.Data
-			print("Real length: " .. Queue.DataSize)
 			Table.Insert(ClientConnection.SendQueue, Queue)
 		end
 	end
