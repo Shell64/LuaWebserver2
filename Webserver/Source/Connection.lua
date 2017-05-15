@@ -32,6 +32,16 @@ Connection.GetSet("ID")
 function Connection.Destroy(Object)
 	Object.ClientTCP:close()
 	Webserver.Connections[Object.ID] = nil
+	
+	local IP = Object.IP
+	
+	if Webserver.EnableConnectionLimit then
+		if Webserver.ConnectionsPerAddress[IP] == 1 then
+			Webserver.ConnectionsPerAddress[IP] = nil
+		else
+			Webserver.ConnectionsPerAddress[IP] = Webserver.ConnectionsPerAddress[IP] - 1
+		end
+	end
 end
 
 function Connection.PostInit(Object, ClientTCP)
@@ -53,6 +63,19 @@ function Connection.PostInit(Object, ClientTCP)
 		end
 		
 		I = I + 1
+	end
+	
+	--Limit amount of connections
+	local IP, Port = ClientTCP:getpeername()
+	Object.IP = IP
+	Object.Port = Port
+	
+	Webserver.ConnectionsPerAddress[IP] = Webserver.ConnectionsPerAddress[IP] and Webserver.ConnectionsPerAddress[IP] + 1 or 1
+	
+	if Webserver.EnableConnectionLimit then
+		if Webserver.ConnectionsPerAddress[IP] > Webserver.MaximumConnectionPerAddress then
+			Object:Destroy()
+		end
 	end
 end
 

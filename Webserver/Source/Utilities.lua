@@ -21,6 +21,24 @@ function Utilities.GetExtension(Str)
 	return ""
 end
 
+function Utilities.GetPath(Str)
+	for I = #Str, 1, -1 do
+		if Str:Substring(I, I) == "." then
+			break
+		elseif Str:Substring(I, I) == "/" or Str:Substring(I, I) == "\\" then
+			return Str
+		end
+	end
+	
+	for I = #Str, 1, -1 do
+		if Str:Substring(I, I) == "/" or Str:Substring(I, I) == "\\" then
+			return Str:Substring(1, I)
+		end
+	end
+	
+	return Str
+end
+
 --Prevent paths with ../../ or with dots.
 function Utilities.FixPath(Str)
 	while Str:Find("..", nil, true) do

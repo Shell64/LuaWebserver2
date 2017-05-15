@@ -161,6 +161,9 @@ function HTTP.ParseHeader(HTTP_Header)
 		end
 	end
 
+	HeaderInformation.Host = HeaderInformation.Host or "0:0"
+	HeaderInformation.MethodData = HeaderInformation.MethodData or "/"
+	
 	local Start = HeaderInformation.Host:Find(":")
 
 	if Start then

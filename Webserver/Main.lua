@@ -40,6 +40,7 @@ SHA1 =			Require("Libraries/SHA1/SHA1")
 
 socket2 = Require("socket")
 socket = socket2 or socket
+OS.Time = socket.gettime
 
 -------------------------------------
 --Webserver
@@ -48,6 +49,7 @@ socket = socket2 or socket
 Webserver = {}
 Webserver.Name = "Lua Webserver"
 Webserver.Version = {Major = 2, Minor = 0, Revision = 0}
+Webserver.Time = OS.Time()
 
 Require("Config")
 
@@ -71,6 +73,7 @@ Utilities = 			Require("Source/Utilities")
 Template = 				Require("Source/Template")
 HTML = 					Require("Source/HTML")
 Applications = 			Require("Source/Applications")
+Cache = 				Require("Source/Cache")
 
 GET = 		Require("Source/Methods/GET")
 POST = 		Require("Source/Methods/POST")
@@ -84,6 +87,14 @@ OPTIONS = 	Require("Source/Methods/OPTIONS")
 -------------------------------------
 local Socket = socket
 local Webserver = Webserver
+local ToString = ToString
+local ToNumber = ToNumber
+local ProtectedCall = ProtectedCall
+local CollectGarbage = CollectGarbage
+local Pairs = Pairs
+local Log = Log
+local Time = OS.Time
+local Type = Type
 
 -------------------------------------
 --Initialize Socket
@@ -103,28 +114,88 @@ end
 
 Log(String.Format(Language[Webserver.Language][6], Webserver.Port))
 
+local function Read(Client, Pattern, Prefix)
+	local Data, ErrorMessage, Partial = Client:receive(Pattern, Prefix)
+	
+	if Data then
+		return Data
+	end
+	
+	if Partial and #Partial > 0 then
+		return Partial
+	end
+	
+	return nil, ErrorMessage
+end
+
+-------------------------------------
+--Logs
+-------------------------------------
+
+if Webserver.EnableLogs then
+	local Date = OS.Date
+	local File = ToString(Webserver.Time)
+	
+	local Path = Utilities.GetPath(Webserver.LogPath)
+	FileSystem2.CreateDirectory(Path)
+	
+	local Extension = Webserver.LogExtension and ToString(Webserver.LogExtension) or "txt"
+	Path = Path .. File .. "." .. Extension
+	
+	if not Webserver.LogToScreen and not Webserver.LogToDisk then
+		_G.Log = function() end
+		
+	elseif Webserver.LogToScreen and Webserver.LogToDisk then
+		local FileSystem2 = FileSystem2
+		local Old_Log = Log
+		
+		_G.Log = function(What, ...)
+			Old_Log(What, ...)
+			FileSystem2.Append(Path, Date("%x %X") .. " " .. ToString(What) .. "\n")
+		end
+		
+	elseif not Webserver.LogToScreen and Webserver.LogToDisk then
+		local FileSystem2 = FileSystem2
+		
+		_G.Log = function(What)
+			FileSystem2.Append(Path, Date("%x %X") .. " " .. ToString(What) .. "\n")
+		end
+		
+	end
+else
+	_G.Log = function() end
+end
+
+Log = _G.Log
+
 -------------------------------------
 --Webserver
 -------------------------------------
+
 Webserver.ServerTCP = ServerTCP
 Webserver.Connections = {}
+Webserver.ConnectionsPerAddress = {}
 
 function Webserver.Update(...)
-	collectgarbage("collect")
+	CollectGarbage("collect")
 	
 	-------------------------------------
 	--Receive incoming client connections and put in a Connection object.
 	-------------------------------------
 	local ClientTCP = ServerTCP:accept()
 	
-	if ClientTCP then
-		ClientTCP:settimeout(0)
+	while ClientTCP do
+		if ClientTCP then
+			ClientTCP:settimeout(0)
+			
+			local ClientConnection = Connection.New(ClientTCP)
+			ClientConnection.Reading = true
+			
+			local IP, Port = ClientTCP:getpeername()
+			Log(String.Format(Language[Webserver.Language][1], ClientConnection:GetID(), ToString(IP), ToString(Port)))
+		end
 		
-		local ClientConnection = Connection.New(ClientTCP)
-		ClientConnection.Reading = true
-		
-		local IP, Port = ClientTCP:getpeername()
-		Log(String.Format(Language[Webserver.Language][1], ClientConnection:GetID(), ToString(IP), ToString(Port)))
+		ClientTCP = ServerTCP:accept()
 	end
 	
 	local TimeNow = Socket.gettime()
@@ -132,17 +203,23 @@ function Webserver.Update(...)
 	-------------------------------------
 	--Process each Connection object in Webserver.Connections table.
 	-------------------------------------
+	
+	local EmptyTable = {}
+	
+	local Waiting = 0
+	
 	for Key, ClientConnection in Pairs(Webserver.Connections) do
 		
 		--Receive incoming data from connection
 		do
+			
 			local Data, Closed
 
 			if ClientConnection.ReceivingHeader then
 				Data, Closed = ClientConnection.ClientTCP:receive("*l")
 			else
 				local Data2
-				Data2, Closed = ClientConnection.ClientTCP:receive(1)
+				Data2, Closed = Read(ClientConnection.ClientTCP, Webserver.SplitPacketSize)
 				
 				if not Data and Data2 then
 					Data = ""
@@ -150,12 +227,12 @@ function Webserver.Update(...)
 				
 				while Data2 do
 					Data = Data .. Data2
-					Data2, Closed = ClientConnection.ClientTCP:receive(1)
+					Data2, Closed = Read(ClientConnection.ClientTCP, Webserver.SplitPacketSize)
 				end
 			end
 			
 			--If that received any data,
-			if Data then
+			while Data do
 				--When a HTTP header ends, it sends a \n\n, so the incoming data in this case is "", means that the HTTP header
 				--was received. As we are reading every incoming line from socket, that will be "".
 				--So here, if we did receive the HTTP header,
@@ -230,6 +307,23 @@ function Webserver.Update(...)
 						print("Something impossible happened?")
 					end
 				end
+				
+				if ClientConnection.ReceivingHeader then
+					Data, Closed = ClientConnection.ClientTCP:receive("*l")
+				else
+					local Data2
+					
+					Data2, Closed = Read(ClientConnection.ClientTCP, Webserver.SplitPacketSize)
+					
+					if not Data and Data2 then
+						Data = ""
+					end
+					
+					while Data2 do
+						Data = Data .. Data2
+						Data2, Closed = Read(ClientConnection.ClientTCP, Webserver.SplitPacketSize)
+					end
+				end
 			end
 			
 			if Closed == "closed" then
@@ -246,10 +340,12 @@ function Webserver.Update(...)
 		
 		--Send the information from "Send data queue" to client.
 		do
+			Waiting = Waiting + 1
+			
 			if ClientConnection.SendQueue[1] then
 				local Queue = ClientConnection.SendQueue[1]
 				
-				local Receive, Send = socket.select({}, {ClientConnection.ClientTCP}, 0)
+				local Receive, Send = socket.select(EmptyTable, {ClientConnection.ClientTCP}, 0)
 				
 				while ClientConnection.SendQueue[1] and Queue == ClientConnection.SendQueue[1] and #Send > 0 do
 				
@@ -300,9 +396,18 @@ function Webserver.Update(...)
 			end
 		end
 	end
+	
+	return Waiting
 end
 
 while true do
-	Webserver.Update()
-	Socket.sleep(0.001)
+	Webserver.Time = Time()
+
+	if Webserver.Update() < 50 then
+		Socket.sleep(0.001)
+	end
+	
+	if CheckTemporalCache then
+		CheckTemporalCache()
+	end
 end
