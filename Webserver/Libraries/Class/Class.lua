@@ -7,7 +7,7 @@
 	
 	The MIT License (MIT)
 
-	Copyright (Object) 2015 Leandro Teixeira da Fonseca - leandro-456@live.com - playgunlock.com
+	Copyright (c) 2016 Leandro Teixeira da Fonseca - leandro-456@live.com - playgunlock.com
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -31,8 +31,12 @@
 local Class = {}
 
 local Vector2 = Vector2
+local Vector3 = Vector3
+local Matrix44 = Matrix44
+local WhiteColor = {R = 1, G = 1, B = 1, A = 1}
 
-local Type = Type
+local Type = type or Type
+local IteratePairs = ipairs or IteratePairs
 local Pairs = pairs or Pairs
 local ToString = tostring or ToString
 local SetMetatable = setmetatable or SetMetatable
@@ -58,7 +62,7 @@ function Class.New(Name)
 	end
 	
 	SuperClass.InitValues = {}
-	SuperClass.InitTypes = {}
+	SuperClass.InitValuesByName = {}
 	
 	----------------------------------------------------------------------------------
 	-- Retorna o objeto classe do objeto
@@ -77,43 +81,40 @@ function Class.New(Name)
 	----------------------------------------------------------------------------------
 	-- Cria um novo objeto utilizando a classe.
 	-- Create a new object using a following class.
-	function SuperClass.New(...)
-		local Object = {}
+	function SuperClass.New(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+		local Object = SetMetatable({}, SuperClass)
 		
-		Object = SetMetatable(Object, SuperClass)
-		Object:Init(...)
-		
-		if SuperClass.PostInit then
-			Object:PostInit(...)
-		end
-		
-		return Object
-	end
-	
-	----------------------------------------------------------------------------------
-	-- Inicializa os valores de um objeto. (Nota: Esta função não deve ser sobrescrita, utilize Class.PostInit ao invés, ou extend.)
-	-- Initializes the values of an object. (Note: This function might not be overrided, use Class.PostInit instead, or Extend.)
-	function SuperClass.Init(Object, ...)
-		for Key, Value in Pairs(Object.InitValues) do
-			if Object.InitTypes[Key] == "vector2" or Object.InitTypes[Key] == "vector3" or Object.InitTypes[Key] == "color" then
-				Object[Key] = Value:Copy()
-			elseif Object.InitTypes[Key] == "table" then
-				Object[Key] = {}
+		for Key = 1, #Object.InitValues do
+			local Value = Object.InitValues[Key]
+			
+			if Value[2] == "vector2" or Value[2] == "vector3" then
+				Object[Value[1]] = Value[3]:Copy()
+			elseif Value[2] == "table" then
+				Object[Value[1]] = {}
 				
-				if Object.InitValues[Key] ~= EmptyTable then
-					for Key2, Value2 in Pairs(Object.InitValues[Key]) do
+				if Value[3] ~= EmptyTable then
+					local Tbl = Object[Value[1]]
+					
+					for Key2, Value2 in Pairs(Value[3]) do
 						if Type(Value2) == "table" then
-							Object[Key][Key2] = {}
+							Tbl[Key2] = {}
 						else
-							Object[Key][Key2] = Value2
+							Tbl[Key2] = Value2
 						end
-						Object[Key][Key2] = Value2
+						
+						Tbl[Key2] = Value2
 					end
 				end
+			elseif Value[2] == "color" then
+				Object[Value[1]] = {Value[3].R, Value[3].G, Value[3].B, Value[3].A}
 			else
-				Object[Key] = Value
+				Object[Value[1]] = Value[3]
 			end
 		end
+		
+		Object:PostInit(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+		
+		return Object
 	end
 	
 	----------------------------------------------------------------------------------
@@ -150,61 +151,58 @@ function Class.New(Name)
 			end
 		end
 		
-		if not ValueType then
-			SuperClass.InitValues[Name] = Value or 0
-			SuperClass.InitTypes[Name] = "number"
+		local InitValue
 		
+		if not ValueType then
+			InitValue =  {Name, "number", Value or 0}
+			
 		elseif ValueType == "number" then
-			SuperClass.InitValues[Name] = Value or 0
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or 0}
 			
 		elseif ValueType == "string" then
-			SuperClass.InitValues[Name] = Value or ""
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or ""}
 			
 		elseif ValueType == "boolean" then
 			if Value ~= nil then
-				SuperClass.InitValues[Name] = Value
+				InitValue =  {Name, ValueType, Value}
 			else
-				SuperClass.InitValues[Name] = false
+				InitValue =  {Name, ValueType, false}
 			end
-			SuperClass.InitTypes[Name] = ValueType
 		
 		elseif ValueType == "vector2" then
-			SuperClass.InitValues[Name] = Value or Vector2.Zero()
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or Vector2.Zero()}
 			
 		elseif ValueType == "vector3" then
-			SuperClass.InitValues[Name] = Value or Vector3.Zero()
-			SuperClass.InitTypes[Name] = ValueType
-		
+			InitValue =  {Name, ValueType, Value or Value3.Zero()}
+			
+		elseif ValueType == "matrix44" then
+			InitValue =  {Name, ValueType, Value or Matrix44.New()}
+			
 		elseif ValueType == "color" then
-			SuperClass.InitValues[Name] = Value or Color2.White()
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or WhiteColor}
 			
 		elseif ValueType == "table" then
-			SuperClass.InitValues[Name] = Value or EmptyTable
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or EmptyTable}
 		
 		elseif ValueType == "function" then
-			SuperClass.InitValues[Name] = Value or EmptyFunction
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or EmptyFunction}
 			
 		elseif ValueType == "userdata" then
-			SuperClass.InitValues[Name] = Value or EmptyTable
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or EmptyTable}
 			
 		elseif ValueType == "model" then
-			SuperClass.InitValues[Name] = Value or Model.New("default/error")
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or Model.New("default/error")}
 			
 		elseif ValueType == "font" then
-			SuperClass.InitValues[Name] = Value or Font.NewCached(Font.GetDefaultFontName(), 18, true)
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, Value or Font.NewCached(Font.GetDefaultFontName(), 18, true)}
 			
 		elseif ValueType == "nil" then
-			SuperClass.InitValues[Name] = nil
-			SuperClass.InitTypes[Name] = ValueType
+			InitValue =  {Name, ValueType, nil}
+		end
+		
+		if InitValue then
+			SuperClass.InitValues[#SuperClass.InitValues + 1] = InitValue
+			SuperClass.InitValuesByName[Name] = InitValue
 		end
 	end
 	
@@ -247,12 +245,31 @@ function Class.New(Name)
 	-- Hera as funções e propriedades de uma outra classe. 
 	-- Inherits the functions and properties from a different class.
 	function SuperClass.Inherit(Class2)
-		for Key, Value in Pairs(Class2.InitValues) do
-			SuperClass.InitValues[Key] = Value
-			SuperClass.InitTypes[Key] = Class2.InitTypes[Key]
+		for Key = 1, #Class2.InitValues do
+			local Found = false
+			
+			local Value = Class2.InitValues[Key]
+			
+			for I = 1, #SuperClass.InitValues do
+				local ValueCompare = SuperClass.InitValues[I]
+				if ValueCompare[1] == Value[1] then
+					ValueCompare[2] = Value[2]
+					ValueCompare[3] = Value[3]
+					
+					Found = true
+					break
+				end
+			end
+			
+			if not Found then
+				local InitValue = {Value[1], Value[2], Value[3]}
+				SuperClass.InitValues[#SuperClass.InitValues + 1] = InitValue
+				SuperClass.InitValuesByName[Value[1]] = InitValue
+			end
 		end
+		
 		for Key, Value in Pairs(Class2) do
-			if Type(Key) == "string" and Key ~= "__index" then
+			if Type(Key) == "string" and Key:sub(1, 2) ~= "__" then
 				SuperClass[Key] = SuperClass[Key] or Value
 			end
 		end
@@ -279,7 +296,7 @@ function Class.New(Name)
 	-- Returns the initial value of a property.
 	-- @return #string
 	function SuperClass.GetDefaultValue(Name)
-		return SuperClass.InitValues[Name]
+		return SuperClass.InitValuesByName[Name][3]
 	end
 	
 	----------------------------------------------------------------------------------
@@ -287,7 +304,7 @@ function Class.New(Name)
 	-- Set the initial value of a property.
 	-- @param #string
 	function SuperClass.SetDefaultValue(Name, Value)
-		SuperClass.InitValues[Name] = Value
+		SuperClass.InitValuesByName[Name][3] = Value
 	end
 	
 	----------------------------------------------------------------------------------
@@ -306,9 +323,9 @@ function Class.New(Name)
 	-- @param #function
 	function SuperClass.ExtendFunction(Name, Func2)
 		local Func = SuperClass[Name]
-		SuperClass[Name] = function(...)
-			Func(...)
-			Func2(...)
+		SuperClass[Name] = function(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+			Func(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+			Func2(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 		end
 	end
 	
@@ -319,10 +336,14 @@ function Class.New(Name)
 	-- @param #function
 	function SuperClass.ExtendFunctionBefore(Name, Func2)
 		local Func = SuperClass[Name]
-		SuperClass[Name] = function(...)
-			Func2(...)
-			Func(...)
+		SuperClass[Name] = function(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+			Func2(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+			Func(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 		end
+	end
+	
+	function SuperClass.PostInit(Object, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
+	
 	end
 	
 	SuperClass.Is(Name, "boolean", true)
