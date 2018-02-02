@@ -31,6 +31,8 @@ end
 local function DELETE(ClientConnection, HeaderInformation, HeaderContent)
 	local Queue = SendQueueObject.New()
 	
+	HeaderInformation.HostFolder = HeaderInformation.HostFolder or ""
+	HeaderInformation.MethodData = HeaderInformation.MethodData or ""
 	
 	
 	--This code bellow will search for file in various directories.

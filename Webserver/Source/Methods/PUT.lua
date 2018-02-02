@@ -31,7 +31,8 @@ end
 local function PUT(ClientConnection, HeaderInformation, HeaderContent)
 	local Queue = SendQueueObject.New()
 	
-	
+	HeaderInformation.HostFolder = HeaderInformation.HostFolder or ""
+	HeaderInformation.MethodData = HeaderInformation.MethodData or ""
 	
 	--This code bellow will search for file in various directories.
 	--Variable Found is false by default, unless it finds the file and it turns into a string containing the filesystem path for the requested file.
