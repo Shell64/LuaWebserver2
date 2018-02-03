@@ -12,7 +12,7 @@ Webserver.Language = "en"
 --Connection
 -------------------------------------
 
-Webserver.Port = 9091
+Webserver.Port = 80
 
 Webserver.MaximumWaitingConnections = 0
 
