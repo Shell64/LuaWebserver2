@@ -89,13 +89,13 @@ function HTTP.ProcessUnicodeEscapes(Parameter)
 	local Count = 0
 	local NewStr = ""
 	local LastIndex = 1
-	local FoundIndex = Parameter:find("%", nil, true)
+	local FoundIndex = Parameter:Find("%", nil, true)
 	
 	while FoundIndex do
 		Count = Count + 1
-		NewStr = NewStr .. Parameter:sub(LastIndex, FoundIndex - 1)
+		NewStr = NewStr .. Parameter:Substring(LastIndex, FoundIndex - 1)
 		
-		local Number = ToNumber("0x" .. Parameter:sub(FoundIndex + 1, FoundIndex + 2))
+		local Number = ToNumber("0x" .. Parameter:Substring(FoundIndex + 1, FoundIndex + 2))
 		
 		if Number then
 			if Number <= 127 then
@@ -110,7 +110,7 @@ function HTTP.ProcessUnicodeEscapes(Parameter)
 		end
 		
 		LastIndex = FoundIndex + 3
-		FoundIndex = Parameter:find("%", LastIndex, true)
+		FoundIndex = Parameter:Find("%", LastIndex, true)
 	end
 	
 	if Count == 0 then
@@ -129,10 +129,10 @@ function HTTP.ParseHeader(HTTP_Header)
 		
 		local Attribute = String_Match(Value, "(.*)%:")
 		
-		if Value:sub(1, 3) == "GET" then
+		if Value:Substring(1, 3) == "GET" then
 			HeaderInformation.Method = "GET"
 			HeaderInformation.MethodData = String_Match(Value, "GET (.*) HTTP")
-		elseif Value:sub(1, 4) == "POST" then
+		elseif Value:Substring(1, 4) == "POST" then
 			HeaderInformation.Method = "POST"
 			HeaderInformation.MethodData = String_Match(Value, "POST (.*) HTTP")
 		else

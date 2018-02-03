@@ -8,9 +8,18 @@ local function CloneTable(Tab)
 	
 	for Key, Value in pairs(Tab) do
 		if type(Value) == "table" then
-			Clone[Key] = {}
-			for Key2, Value2 in pairs(Value) do
-				Clone[Key][Key2] = Value2
+			local KeyType = type(Key)
+			local ValueType = type(Value)
+			
+			if KeyType ~= "table" and KeyType ~= "userdata" and ValueType ~= "userdata" then
+				Clone[Key] = {}
+				for Key2, Value2 in pairs(Value) do
+					local Key2Type = type(Key2)
+					local Value2Type = type(Value2)
+					if Key2Type ~= "table" and Key2Type ~= "userdata" and Value2Type ~= "table" and Value2Type ~= "userdata" then
+						Clone[Key][Key2] = Value2
+					end
+				end
 			end
 		else
 			Clone[Key] = Value
@@ -29,7 +38,6 @@ package.path = package.path .. ";../../Webserver/?.lua"
 -------------------------------------
 --Request required libraries
 -------------------------------------
-InitialEnvironment = CloneTable(_G)
 				Require("Libraries/Wrap/Wrap")
 				Require("Libraries/Table/Table")
 				Require("Libraries/String/String")
@@ -74,6 +82,7 @@ Template = 				Require("Source/Template")
 HTML = 					Require("Source/HTML")
 Applications = 			Require("Source/Applications")
 Cache = 				Require("Source/Cache")
+InitialEnvironment = CloneTable(_G)
 
 GET = 		Require("Source/Methods/GET")
 POST = 		Require("Source/Methods/POST")
