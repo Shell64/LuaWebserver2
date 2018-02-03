@@ -99,13 +99,13 @@ function HTTP.ProcessUnicodeEscapes(Parameter)
 		
 		if Number then
 			if Number <= 127 then
-				String_Format("%s%s", NewStr, String_Char(Number))
+				NewStr = String_Format("%s%c", NewStr, Number)
 			elseif Number < 2048 then
-				String_Format("%s%s", NewStr, String_Format("%c%c", 192 + Math_Floor (Number / 64), 128 + (Number % 64)))
+				NewStr = String_Format("%s%c%c", NewStr, 192 + Math_Floor (Number / 64), 128 + (Number % 64))
 			elseif Number < 65536 then
-				String_Format("%s%s", NewStr, String_Format("%c%c%c", 224 + Math_Floor (Number / 4096), 128 + (Math_Floor (Number / 64) % 64), 128 + (Number % 64)))
+				NewStr = String_Format("%s%c%c%c", NewStr, 224 + Math_Floor (Number / 4096), 128 + (Math_Floor (Number / 64) % 64), 128 + (Number % 64))
 			elseif Number < 2097152 then
-				String_Format("%s%s", NewStr, String_Format("%c%c%c%c", 240 + Math_Floor (Number / 262144), 128 + (Math_Floor (Number / 4096) % 64), 128 + (Math_Floor (Number / 64) % 64), 128 + (Number % 64)))
+				NewStr = String_Format("%s%c%c%c%c", NewStr, 240 + Math_Floor (Number / 262144), 128 + (Math_Floor (Number / 4096) % 64), 128 + (Math_Floor (Number / 64) % 64), 128 + (Number % 64))
 			end
 		end
 		
