@@ -1,9 +1,17 @@
 local HTTP = {}
 
+local IteratePairs = IteratePairs
+local Pairs = Pairs
+local ToNumber = ToNumber
+local Math_Floor = Math.Floor
+local String_Char = String.Char
+local String_Format = String.Format
+local String_Match = String.Match
+
 -------------------------------------
 --HTTP End line characters
 -------------------------------------
-HTTP.NewLine = String.Char(0x0D) .. String.Char(0x0A)
+HTTP.NewLine = String_Char(0x0D) .. String_Char(0x0A)
 HTTP.End = HTTP.NewLine .. HTTP.NewLine
 
 -------------------------------------
@@ -65,7 +73,7 @@ function HTTP.GenerateHeader(Code, Headers)
 	local Header = 
 	"HTTP/1.1 " .. HTTP.ResponseCodes[Code] .. HTTP.NewLine .. 
 	"Date: " .. Utilities.Date() .. HTTP.NewLine .. 
-	"Server: " .. String.Format("%s %i.%i.%i", Webserver.Name, Webserver.Version.Major, Webserver.Version.Minor, Webserver.Version.Revision) .. HTTP.NewLine
+	"Server: " .. String_Format("%s %i.%i.%i", Webserver.Name, Webserver.Version.Major, Webserver.Version.Minor, Webserver.Version.Revision) .. HTTP.NewLine
 	
 	for Key, Value in Pairs(Headers) do
 		Header = Header .. ToString(Key) .. ": " .. ToString(Value) .. HTTP.NewLine
@@ -78,49 +86,38 @@ end
 
 --Convert URI escapes such %20, etc.
 function HTTP.ProcessUnicodeEscapes(Parameter)
-	local StartEscape = 1
-	local LastEscape = 1
-	local FoundEscape = false
-	local NewParameter = ""
 	local Count = 0
+	local NewStr = ""
+	local LastIndex = 1
+	local FoundIndex = Parameter:find("%", nil, true)
 	
-	--ProtectedCall(function()
-		for I = 1, #Parameter do
-			if not FoundEscape then
-				if Parameter:Substring(I, I) == "%" then
-					StartEscape = I
-					FoundEscape = true
-					
-					NewParameter = NewParameter .. Parameter:Substring(LastEscape, StartEscape - 1)
-				end
-			else
-				if not ToNumber(Parameter:Substring(I, I)) or I == #Parameter or Count == 2 then
-					Count = 0
-					local Number = ToNumber("0x" .. Parameter:Substring(StartEscape + 1, I - 1))
-					
-					if Number then
-						NewParameter = NewParameter .. String.Char(Number)
-					end
-					
-					
-					LastEscape = I
-					FoundEscape = false
-				else
-					Count = Count + 1
-				end
+	while FoundIndex do
+		Count = Count + 1
+		NewStr = NewStr .. Parameter:sub(LastIndex, FoundIndex - 1)
+		
+		local Number = ToNumber("0x" .. Parameter:sub(FoundIndex + 1, FoundIndex + 2))
+		
+		if Number then
+			if Number <= 127 then
+				String_Format("%s%s", NewStr, String_Char(Number))
+			elseif Number < 2048 then
+				String_Format("%s%s", NewStr, String_Format("%c%c", 192 + Math_Floor (Number / 64), 128 + (Number % 64)))
+			elseif Number < 65536 then
+				String_Format("%s%s", NewStr, String_Format("%c%c%c", 224 + Math_Floor (Number / 4096), 128 + (Math_Floor (Number / 64) % 64), 128 + (Number % 64)))
+			elseif Number < 2097152 then
+				String_Format("%s%s", NewStr, String_Format("%c%c%c%c", 240 + Math_Floor (Number / 262144), 128 + (Math_Floor (Number / 4096) % 64), 128 + (Math_Floor (Number / 64) % 64), 128 + (Number % 64)))
 			end
 		end
-	--end)
-	
-	NewParameter = NewParameter .. Parameter:Substring(LastEscape, #Parameter)
-	
-	if NewParameter ~= "" then
-		Parameter = NewParameter
+		
+		LastIndex = FoundIndex + 3
+		FoundIndex = Parameter:find("%", LastIndex, true)
 	end
 	
-	Parameter = Parameter:GSubstring("%+", " ")
-	
-	return Parameter
+	if Count == 0 then
+		return Parameter
+	else
+		return NewStr
+	end
 end
 
 function HTTP.ParseHeader(HTTP_Header)
@@ -130,14 +127,14 @@ function HTTP.ParseHeader(HTTP_Header)
 	for Key, Value in IteratePairs(HTTP_Header:Split("\n", 32)) do
 		Value = Value:Trim()
 		
-		local Attribute = String.Match(Value, "(.*)%:")
+		local Attribute = String_Match(Value, "(.*)%:")
 		
 		if Value:sub(1, 3) == "GET" then
 			HeaderInformation.Method = "GET"
-			HeaderInformation.MethodData = String.Match(Value, "GET (.*) HTTP")
+			HeaderInformation.MethodData = String_Match(Value, "GET (.*) HTTP")
 		elseif Value:sub(1, 4) == "POST" then
 			HeaderInformation.Method = "POST"
-			HeaderInformation.MethodData = String.Match(Value, "POST (.*) HTTP")
+			HeaderInformation.MethodData = String_Match(Value, "POST (.*) HTTP")
 		else
 			
 			local Attribute = ""
