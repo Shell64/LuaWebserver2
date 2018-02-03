@@ -46,6 +46,13 @@ FileSystem2 = 	Require("Libraries/FileSystem2/FileSystem2")
 JSON =			Require("Libraries/DKJSON/DKJSON")
 SHA1 =			Require("Libraries/SHA1/SHA1")
 
+-------------------------------------
+--Request internal libraries
+-------------------------------------
+MIME = 					Require("Source/MIME")
+HTTP = 					Require("Source/HTTP")
+InitialEnvironment = CloneTable(_G)
+
 socket2 = Require("socket")
 socket = socket2 or socket
 OS.Time = socket.gettime
@@ -72,8 +79,6 @@ Webserver.Cache = {} --cache de arquivos
 --Request required classes
 -------------------------------------
 Language = 				Require("Source/Language")
-MIME = 					Require("Source/MIME")
-HTTP = 					Require("Source/HTTP")
 SendQueueObject = 		Require("Source/Queues/SendQueueObject")
 ReceiveQueueObject = 	Require("Source/Queues/ReceiveQueueObject")
 Connection = 			Require("Source/Connection")
@@ -82,7 +87,6 @@ Template = 				Require("Source/Template")
 HTML = 					Require("Source/HTML")
 Applications = 			Require("Source/Applications")
 Cache = 				Require("Source/Cache")
-InitialEnvironment = CloneTable(_G)
 
 GET = 		Require("Source/Methods/GET")
 POST = 		Require("Source/Methods/POST")
