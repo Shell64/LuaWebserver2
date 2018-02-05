@@ -86,6 +86,8 @@ end
 
 --Convert URI escapes such %20, etc.
 function HTTP.ProcessUnicodeEscapes(Parameter)
+	Parameter = Parameter:GSubstring("%+", " ")
+	
 	local Count = 0
 	local NewStr = ""
 	local LastIndex = 1
